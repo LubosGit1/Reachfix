@@ -1,0 +1,21 @@
+name: reachfix
+
+on:
+  pull_request:
+  schedule:
+    - cron: "23 7 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: LubosGit1/Reachfix@main
+        with:
+          path: .
+          fail-on: reachable
+          fix: false

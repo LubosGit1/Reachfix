@@ -2,7 +2,7 @@
 
 reachfix is an open-source TypeScript CLI and GitHub Action planned to identify vulnerable npm dependencies, analyze whether vulnerable code is reachable, and verify defensive fixes.
 
-> **Project status:** early implementation (milestones M0–M5). `scan` currently inventories dependencies and queries OSV; import reachability and a first symbol/call-path analyzer are implemented. Fix planning, version verification, and the LLM repair service exist as library APIs. The CLI `fix` and `bench` commands, Docker verification, full reports, and GitHub Action are not implemented yet.
+> **Project status:** early implementation (milestones M0–M6). `scan` inventories dependencies, queries OSV, and reports import/symbol reachability. Terminal, JSON, SARIF 2.1.0, and Markdown formats are available. The GitHub Action scans and uploads SARIF. Automatic fixes and PR creation remain disabled until fixes can be verified in the required Docker sandbox.
 
 ## Requirements
 
@@ -20,11 +20,16 @@ The current CLI surface is:
 
 ```sh
 node dist/cli/index.js scan [path]
+node dist/cli/index.js scan [path] --format sarif --output reachfix.sarif
 node dist/cli/index.js fix [path] [--advisory <id>] [--pr]
 node dist/cli/index.js bench <dataset>
 ```
 
-`scan` supports terminal and JSON output. `fix` and `bench` remain placeholders and return exit code `2`.
+`scan --format` accepts `text`, `json`, `sarif`, or `markdown`. `--fail-on` accepts `reachable` (default), `unknown`, `any`, or `never`. Exit codes are `0` when the threshold is not met, `1` when it is met, and `2` for a tool error. `fix` and `bench` remain placeholders and return exit code `2`.
+
+### GitHub Action
+
+Use the example workflow at [examples/reachfix.yml](./examples/reachfix.yml). Grant `security-events: write` to upload SARIF. The action scans by default and uploads a SARIF 2.1.0 report. `fix: true` is deliberately rejected without applying changes: verified PR generation must wait for the isolated Docker verification milestone.
 
 ## Implemented milestones
 
@@ -34,8 +39,9 @@ node dist/cli/index.js bench <dataset>
 - **M3:** initial symbol/call-site analysis.
 - **M4:** deterministic dependency upgrade/override plans and version verification.
 - **M5:** optional Anthropic-assisted code fixes with restricted context, validated diffs, a three-attempt feedback loop, and a configured cost ceiling.
+- **M6:** text, JSON, SARIF 2.1.0, and Markdown reports; CLI scan thresholds; and a GitHub Action for SARIF upload.
 
-M6–M8 (reports and GitHub Action, benchmark, and release documentation) remain planned. See [SPEC.md](./SPEC.md) for the complete product scope and safety requirements.
+M7–M8 (benchmark and release documentation) remain planned. Verified fix pull requests remain gated on the Docker sandbox. See [SPEC.md](./SPEC.md) for the complete product scope and safety requirements.
 
 ### LLM-assisted fixes (M5)
 

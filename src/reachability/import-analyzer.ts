@@ -163,6 +163,32 @@ function extractImportReferences(
     });
   }
 
+  const computedImportPattern = /\bimport\(\s*([^"'`\s][^)]*)\)/g;
+  for (const match of source.matchAll(computedImportPattern)) {
+    references.push({
+      packageName: "",
+      evidence: {
+        filePath,
+        importType: "dynamic-import",
+        statement: match[0],
+      },
+      dynamicallyResolved: true,
+    });
+  }
+
+  const evalPattern = /\beval\s*\(/g;
+  for (const match of source.matchAll(evalPattern)) {
+    references.push({
+      packageName: "",
+      evidence: {
+        filePath,
+        importType: "require",
+        statement: match[0],
+      },
+      dynamicallyResolved: true,
+    });
+  }
+
   return references;
 }
 

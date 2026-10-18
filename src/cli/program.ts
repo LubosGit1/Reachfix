@@ -1,12 +1,12 @@
 import { Command } from "commander";
+import { writeFile } from "node:fs/promises";
+import path from "node:path";
 import { scanProject } from "./scan.js";
-
-function markUnimplemented(commandName: string): void {
-  process.stderr.write(
-    `The "${commandName}" command is not implemented yet.\n`,
-  );
-  process.exitCode = 2;
-}
+import { createJsonReport, renderJsonReport } from "../report/json.js";
+import { renderMarkdownReport } from "../report/markdown.js";
+import { createSarifReport, renderSarifReport } from "../report/sarif.js";
+import { renderTerminalReport } from "../report/terminal.js";
+import type { ScanFailThreshold } from "../types.js";
 
 export function createProgram(): Command {
   const program = new Command();
@@ -20,31 +20,56 @@ export function createProgram(): Command {
     .command("scan")
     .description("Find vulnerable dependencies.")
     .argument("[path]", "project directory", ".")
-    .option("--format <format>", "output format (text or json)", "text")
-    .action(async (projectPath: string, options: { format: string }) => {
-      if (options.format !== "text" && options.format !== "json") {
-        process.stderr.write(`Unsupported scan format "${options.format}".\n`);
-        process.exitCode = 2;
-        return;
-      }
-
-      const findings = await scanProject(projectPath);
-      if (options.format === "json") {
-        process.stdout.write(`${JSON.stringify(findings, null, 2)}\n`);
-      } else if (findings.length === 0) {
-        process.stdout.write("No vulnerable dependencies found.\n");
-      } else {
-        for (const finding of findings) {
-          for (const advisory of finding.advisories) {
-            const summary = advisory.summary ? ` — ${advisory.summary}` : "";
-            process.stdout.write(
-              `${finding.dependency.name}@${finding.dependency.version} ${advisory.id}${summary}\n`,
-            );
-          }
+    .option(
+      "--format <format>",
+      "output format (text, json, sarif, or markdown)",
+      "text",
+    )
+    .option("--output <file>", "write report to a file instead of stdout")
+    .option(
+      "--fail-on <threshold>",
+      "failure threshold (reachable, unknown, any, or never)",
+      "reachable",
+    )
+    .action(
+      async (
+        projectPath: string,
+        options: { format: string; output?: string; failOn: string },
+      ) => {
+        if (
+          options.format !== "text" &&
+          options.format !== "json" &&
+          options.format !== "sarif" &&
+          options.format !== "markdown"
+        ) {
+          process.stderr.write(
+            `Unsupported scan format "${options.format}".\n`,
+          );
+          process.exitCode = 2;
+          return;
         }
-      }
-      process.exitCode = findings.length > 0 ? 1 : 0;
-    });
+        if (!isScanFailThreshold(options.failOn)) {
+          process.stderr.write(
+            `Unsupported --fail-on threshold "${options.failOn}".\n`,
+          );
+          process.exitCode = 2;
+          return;
+        }
+
+        const results = await scanProject(projectPath);
+        const output = renderScanResults(
+          results,
+          options.format,
+          path.resolve(projectPath),
+        );
+        if (options.output) {
+          await writeFile(options.output, output, "utf8");
+        } else {
+          process.stdout.write(output);
+        }
+        process.exitCode = shouldFailScan(results, options.failOn) ? 1 : 0;
+      },
+    );
 
   program
     .command("fix")
@@ -61,4 +86,57 @@ export function createProgram(): Command {
     .action(() => markUnimplemented("bench"));
 
   return program;
+}
+
+function renderScanResults(
+  results: Awaited<ReturnType<typeof scanProject>>,
+  format: string,
+  projectPath: string,
+): string {
+  switch (format) {
+    case "json":
+      return renderJsonReport(createJsonReport(results));
+    case "sarif":
+      return renderSarifReport(createSarifReport(results, projectPath));
+    case "markdown":
+      return renderMarkdownReport(results);
+    default:
+      return renderTerminalReport(results);
+  }
+}
+
+export function isScanFailThreshold(value: string): value is ScanFailThreshold {
+  return (
+    value === "reachable" ||
+    value === "unknown" ||
+    value === "any" ||
+    value === "never"
+  );
+}
+
+export function shouldFailScan(
+  results: Awaited<ReturnType<typeof scanProject>>,
+  threshold: ScanFailThreshold,
+): boolean {
+  switch (threshold) {
+    case "reachable":
+      return results.some(
+        ({ reachability }) => reachability.verdict === "REACHABLE",
+      );
+    case "unknown":
+      return results.some(
+        ({ reachability }) => reachability.verdict !== "NOT_REACHABLE",
+      );
+    case "any":
+      return results.length > 0;
+    case "never":
+      return false;
+  }
+}
+
+function markUnimplemented(commandName: string): void {
+  process.stderr.write(
+    `The "${commandName}" command is not implemented yet.\n`,
+  );
+  process.exitCode = 2;
 }

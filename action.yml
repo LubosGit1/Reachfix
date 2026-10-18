@@ -1,0 +1,80 @@
+name: reachfix
+description: Scan npm dependencies for vulnerabilities and upload SARIF results.
+inputs:
+  path:
+    description: Project directory to scan.
+    required: false
+    default: .
+  fail-on:
+    description: Failure threshold (reachable, unknown, any, or never).
+    required: false
+    default: reachable
+  fix:
+    description: Open a pull request with verified fixes (currently unavailable).
+    required: false
+    default: "false"
+  sarif-file:
+    description: SARIF output file, relative to the workspace or absolute.
+    required: false
+    default: reachfix.sarif
+outputs:
+  sarif-file:
+    description: Path to the generated SARIF report.
+    value: ${{ steps.scan.outputs.sarif-file }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 11
+    - name: Build reachfix
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        pnpm install --frozen-lockfile
+        pnpm build
+    - name: Scan project
+      id: scan
+      shell: bash
+      env:
+        REACHFIX_PATH: ${{ inputs.path }}
+        REACHFIX_FAIL_ON: ${{ inputs.fail-on }}
+        REACHFIX_SARIF_FILE: ${{ inputs.sarif-file }}
+      run: |
+        case "$REACHFIX_SARIF_FILE" in
+          /*) sarif_file="$REACHFIX_SARIF_FILE" ;;
+          *) sarif_file="$GITHUB_WORKSPACE/$REACHFIX_SARIF_FILE" ;;
+        esac
+        mkdir -p "$(dirname "$sarif_file")"
+        echo "sarif-file=$sarif_file" >> "$GITHUB_OUTPUT"
+        if node "$GITHUB_ACTION_PATH/dist/cli/index.js" scan "$REACHFIX_PATH" \
+          --format sarif \
+          --output "$sarif_file" \
+          --fail-on "$REACHFIX_FAIL_ON"; then
+          scan_exit_code=0
+        else
+          scan_exit_code=$?
+        fi
+        echo "scan-exit-code=$scan_exit_code" >> "$GITHUB_OUTPUT"
+        if [ "$scan_exit_code" -eq 2 ]; then
+          exit 2
+        fi
+    - name: Upload SARIF
+      if: always() && steps.scan.outputs.sarif-file != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif-file }}
+        category: reachfix
+    - name: Fail on configured threshold
+      if: always() && steps.scan.outputs.scan-exit-code == '1'
+      shell: bash
+      run: exit 1
+    - name: Reject unavailable automatic fixes
+      if: inputs.fix == 'true'
+      shell: bash
+      run: |
+        echo "::error::Automatic fix PRs require the Docker verification sandbox, which is not implemented yet. No changes were applied."
+        exit 2

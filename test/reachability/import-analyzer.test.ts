@@ -48,6 +48,16 @@ describe("import reachability analyzer", () => {
     expect(result.evidence[0]?.statement).toContain("require(target)");
   });
 
+  it("marks computed imports and eval as unknown", async () => {
+    const result = await new ImportReachabilityAnalyzer().analyze(
+      path.join(fixturesPath, "uncertain-loader"),
+      "vulnerable",
+    );
+
+    expect(result.verdict).toBe("UNKNOWN");
+    expect(result.evidence.length).toBeGreaterThan(0);
+  });
+
   it("marks absence of import as not reachable", async () => {
     const result = await new ImportReachabilityAnalyzer().analyze(
       path.join(fixturesPath, "dead"),

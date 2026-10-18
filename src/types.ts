@@ -55,6 +55,7 @@ export type ReachabilityVerdict = "REACHABLE" | "NOT_REACHABLE" | "UNKNOWN";
 
 export interface ImportEvidence {
   filePath: string;
+  line?: number;
   importType: "import" | "require" | "dynamic-import" | "export";
   statement: string;
 }
@@ -65,6 +66,14 @@ export interface ImportReachabilityResult {
   reason: string;
   evidence: ImportEvidence[];
 }
+
+export interface ScanResult {
+  dependency: DependencyNode;
+  advisory: Advisory;
+  reachability: ImportReachabilityResult;
+}
+
+export type ScanFailThreshold = "reachable" | "unknown" | "any" | "never";
 
 export type FixStrategy = "upgrade" | "override" | "manual-code-fix";
 
