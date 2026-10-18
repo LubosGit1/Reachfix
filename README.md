@@ -2,7 +2,7 @@
 
 reachfix is an open-source TypeScript CLI and GitHub Action planned to identify vulnerable npm dependencies, analyze whether vulnerable code is reachable, and verify defensive fixes.
 
-> **Project status:** early implementation (milestones M0–M8). `scan` inventories dependencies, queries OSV, and reports import/symbol reachability. Terminal, JSON, SARIF 2.1.0, and Markdown formats are available. The GitHub Action scans and uploads SARIF. A Docker baseline verifier is available as a library component; automatic fixes and PR creation remain disabled until the end-to-end remediation interface is wired to it.
+> **Project status:** milestones M0–M9 are implemented. `scan` inventories dependencies, queries OSV, and reports import/symbol reachability. Terminal, JSON, SARIF 2.1.0, and Markdown formats are available. The GitHub Action scans and uploads SARIF. `fix` stages a reachable dependency upgrade, verifies it against a clean baseline in Docker, and applies only the verified manifest and lockfile changes; optional PR creation uses GitHub CLI. The benchmark runner is implemented, but the dataset still needs manually reviewed ground-truth cases before publishing metrics.
 
 Documentation: [architecture](./docs/architecture.md), [limitations and result interpretation](./docs/limitations.md), [AI-assisted development and release process](./docs/ai-development-and-release.md), and the full [project specification](./SPEC.md).
 
@@ -52,6 +52,8 @@ Fixes are limited to a single direct or transitive dependency per invocation. Co
 ### Benchmark (M7)
 
 Benchmark ground truth is intentionally manual. Create a case template with `pnpm bench:case -- <case-id>`, then edit `bench/cases/<case-id>.json` with a public repository URL, immutable 40-character commit SHA, advisory ID, expected verdict, and evidence-based rationale. Review every verdict yourself; do not treat analyzer output as ground truth. Aim for 50–100 real cases and at least 30% `REACHABLE` cases before publishing metrics.
+
+The checked-in dataset currently has one evidence-backed seed case, [lodash-prototype-pollution-nodejs-goof](./bench/cases/lodash-prototype-pollution-nodejs-goof.json). It is not representative; expand and review the dataset before publishing metrics.
 
 Run cases using `pnpm bench bench/cases`. Each case is checked out at its pinned commit without running repository scripts. reachfix scans it statically; `npm audit --json --package-lock-only --ignore-scripts` provides the comparison count. Results are written to `bench/results/<UTC-date>.json`. A date can be written only once, so copy or rename a prior result before rerunning on the same day. Run `pnpm bench:report` to regenerate the table below. Missing advisory results remain `UNKNOWN`, not `NOT_REACHABLE`. Fix success and API cost are not yet benchmarked; fix attempts are not part of M7.
 
