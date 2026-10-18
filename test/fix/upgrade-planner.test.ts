@@ -58,4 +58,32 @@ describe("upgrade planner", () => {
     );
     expect(manifest.overrides.vulnerable).toBe(">=2.2.0");
   });
+
+  it("uses pnpm overrides for transitive pnpm dependencies", async () => {
+    const projectPath = await mkdtemp(path.join(tmpdir(), "reachfix-fix-"));
+    paths.push(projectPath);
+    await writeFile(
+      path.join(projectPath, "package.json"),
+      JSON.stringify({ dependencies: { app: "^1.0.0" } }, null, 2),
+    );
+
+    const planner = new UpgradePlanner();
+    const plan = await planner.createPlan(
+      projectPath,
+      "vulnerable",
+      "2.2.0",
+      "pnpm",
+    );
+
+    expect(plan.packageSection).toBe("pnpm.overrides");
+    await planner.applyPlan(projectPath, plan);
+    const manifest = JSON.parse(
+      await readFile(path.join(projectPath, "package.json"), "utf8"),
+    ) as {
+      pnpm?: { overrides?: Record<string, string> };
+      overrides?: unknown;
+    };
+    expect(manifest.pnpm?.overrides?.vulnerable).toBe(">=2.2.0");
+    expect(manifest.overrides).toBeUndefined();
+  });
 });

@@ -8,6 +8,11 @@ import { createSarifReport, renderSarifReport } from "../report/sarif.js";
 import { renderTerminalReport } from "../report/terminal.js";
 import type { ScanFailThreshold } from "../types.js";
 import { runBenchmarkDataset } from "../bench/runner.js";
+import { fixDependency } from "../fix/dependency-fixer.js";
+import {
+  assertCleanGitWorktree,
+  createFixPullRequest,
+} from "../fix/pull-request.js";
 
 export function createProgram(): Command {
   const program = new Command();
@@ -74,11 +79,52 @@ export function createProgram(): Command {
 
   program
     .command("fix")
-    .description("Find, fix, and verify vulnerable dependencies.")
+    .description("Upgrade a reachable vulnerable dependency and verify it.")
     .argument("[path]", "project directory", ".")
     .option("--advisory <id>", "fix only the specified advisory")
     .option("--pr", "open a pull request for a verified fix")
-    .action(() => markUnimplemented("fix"));
+    .action(
+      async (
+        projectPath: string,
+        options: { advisory?: string; pr?: boolean },
+      ) => {
+        if (options.pr) {
+          await assertCleanGitWorktree(projectPath);
+        }
+        const result = await fixDependency(projectPath, options.advisory);
+        process.stdout.write(`${result.status}: ${result.message}\n`);
+        if (result.status === "VERIFIED") {
+          if (result.changedFiles?.length) {
+            process.stdout.write(
+              `Updated: ${result.changedFiles
+                .map((filePath) =>
+                  path.relative(path.resolve(projectPath), filePath),
+                )
+                .join(", ")}\n`,
+            );
+          }
+          if (options.pr) {
+            const pullRequestUrl = await createFixPullRequest(
+              projectPath,
+              result,
+            );
+            process.stdout.write(
+              pullRequestUrl
+                ? `Pull request: ${pullRequestUrl}\n`
+                : "Pull request created.\n",
+            );
+          }
+          process.exitCode = 0;
+          return;
+        }
+        process.exitCode =
+          result.status === "NO_FINDING"
+            ? 0
+            : result.status === "INCONCLUSIVE"
+              ? 2
+              : 1;
+      },
+    );
 
   program
     .command("bench")
@@ -148,11 +194,4 @@ export function shouldFailScan(
 
 function formatPercent(value: number | null): string {
   return value === null ? "n/a" : `${(value * 100).toFixed(1)}%`;
-}
-
-function markUnimplemented(commandName: string): void {
-  process.stderr.write(
-    `The "${commandName}" command is not implemented yet.\n`,
-  );
-  process.exitCode = 2;
 }

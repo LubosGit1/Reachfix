@@ -46,8 +46,12 @@ responses are schema-validated and patches are restricted to approved files.
 Docker-backed baseline/candidate verifier. It installs dependencies with
 lifecycle scripts disabled, then runs test/build checks in a resource-limited,
 network-isolated container. The repair loop captures and passes a clean
-baseline snapshot to its injected verifier. The `fix` CLI command and Action
-are not yet wired to this verifier, so both still decline automatic fixes.
+baseline snapshot to its injected verifier. The `fix` command in
+[`src/fix/dependency-fixer.ts`](../src/fix/dependency-fixer.ts) selects the
+first reachable finding with a fixed OSV semver version, stages a manifest and
+lockfile update, verifies the staged project, and copies only verified files
+back. `fix --pr` uses Git and GitHub CLI to publish those files as a pull
+request after checking that the worktree was clean before the fix.
 
 ## GitHub Action
 
@@ -55,7 +59,9 @@ are not yet wired to this verifier, so both still decline automatic fixes.
 uploads SARIF, then applies the configured failure threshold. An analysis
 threshold failure does not prevent SARIF upload; an operational tool error
 does. The example workflow is in
-[`examples/reachfix.yml`](../examples/reachfix.yml).
+[`examples/reachfix.yml`](../examples/reachfix.yml). When `fix: true`, it
+requests a verified fix pull request and needs `contents: write`,
+`pull-requests: write`, and an authenticated `gh` CLI.
 
 ## Benchmark pipeline
 

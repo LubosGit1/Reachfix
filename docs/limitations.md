@@ -36,19 +36,27 @@ the finding and its evidence.
 
 ## Fix and verification status
 
-The planner and LLM-assisted patch pipeline are building blocks, not a
-production automated remediation command. A Docker verifier is available as a
-library component and compares lockfile resolution and test/build outcomes
+The `fix` command automatically handles one reachable dependency at a time
+when OSV provides a precise fixed semver version. It stages a package manifest
+and lockfile update, runs the lockfile updater with lifecycle scripts disabled,
+and applies the two files only after Docker verification against a clean
+baseline succeeds. `fix --pr` can create a pull request through GitHub CLI after
+requiring a clean worktree.
+
+The Docker verifier compares lockfile resolution and test/build outcomes
 against a clean baseline snapshot. Dependency installation runs with lifecycle
 scripts disabled; project test/build scripts execute only in containers with
 network access disabled and resource limits. If the baseline cannot install or
-pass checks, the result is `INCONCLUSIVE`.
+pass checks, the result is `INCONCLUSIVE`. Projects that require install
+lifecycle scripts or network access during tests may not be verifiable.
 
-`fix` is still a placeholder, the GitHub Action rejects `fix: true`, and no
-patch is applied by those interfaces. Do not infer that a fix has passed
-verification until a supported remediation workflow uses the sandbox verifier.
-Some dependencies require install lifecycle scripts or network access during
-tests; those projects may not be verifiable by this conservative sandbox.
+The fix command does not automate caller-code migrations, and does not try
+every affected advisory in one invocation. It refuses findings whose
+reachability is unknown/not proven or where OSV has no fixed semver version.
+The optional LLM repair service remains a lower-level component, not a second
+automatic CLI path. Pull request creation requires `gh` authentication and
+appropriate repository permissions; it pushes a branch and cannot guarantee
+that branch protection or repository policy will permit the PR.
 
 ## Benchmark results
 

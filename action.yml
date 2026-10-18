@@ -10,7 +10,7 @@ inputs:
     required: false
     default: reachable
   fix:
-    description: Open a pull request with verified fixes (currently unavailable).
+    description: Create a pull request for a reachable dependency fix verified in Docker.
     required: false
     default: "false"
   sarif-file:
@@ -68,13 +68,16 @@ runs:
       with:
         sarif_file: ${{ steps.scan.outputs.sarif-file }}
         category: reachfix
+    - name: Create pull request for verified fix
+      if: inputs.fix == 'true'
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REACHFIX_PATH: ${{ inputs.path }}
+      run: |
+        node "$GITHUB_ACTION_PATH/dist/cli/index.js" fix "$REACHFIX_PATH" --pr
     - name: Fail on configured threshold
       if: always() && steps.scan.outputs.scan-exit-code == '1'
       shell: bash
       run: exit 1
-    - name: Reject unavailable automatic fixes
-      if: inputs.fix == 'true'
-      shell: bash
-      run: |
-        echo "::error::Automatic fix PRs require the Docker verification sandbox, which is not implemented yet. No changes were applied."
-        exit 2

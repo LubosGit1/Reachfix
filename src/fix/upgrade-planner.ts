@@ -14,6 +14,7 @@ export class UpgradePlanner {
     projectPath: string,
     dependencyName: string,
     targetVersion: string,
+    lockfileKind: "npm" | "pnpm" = "npm",
   ): Promise<UpgradePlan> {
     const packageJsonPath = path.join(projectPath, "package.json");
     const raw = await readFile(packageJsonPath, "utf8");
@@ -22,6 +23,7 @@ export class UpgradePlanner {
       devDependencies?: Record<string, string>;
       optionalDependencies?: Record<string, string>;
       overrides?: Record<string, string>;
+      pnpm?: { overrides?: Record<string, string> };
     };
 
     if (manifest.dependencies?.[dependencyName]) {
@@ -63,7 +65,7 @@ export class UpgradePlanner {
       dependencyName,
       targetVersion,
       filePath: packageJsonPath,
-      packageSection: "overrides",
+      packageSection: lockfileKind === "pnpm" ? "pnpm.overrides" : "overrides",
     };
   }
 
@@ -75,12 +77,21 @@ export class UpgradePlanner {
       devDependencies?: Record<string, string>;
       optionalDependencies?: Record<string, string>;
       overrides?: Record<string, string>;
+      pnpm?: { overrides?: Record<string, string> };
     };
 
     if (plan.packageSection === "overrides") {
       manifest.overrides = {
         ...(manifest.overrides ?? {}),
         [plan.dependencyName]: `>=${plan.targetVersion}`,
+      };
+    } else if (plan.packageSection === "pnpm.overrides") {
+      manifest.pnpm = {
+        ...(manifest.pnpm ?? {}),
+        overrides: {
+          ...(manifest.pnpm?.overrides ?? {}),
+          [plan.dependencyName]: `>=${plan.targetVersion}`,
+        },
       };
     } else {
       const section = manifest[plan.packageSection] ?? {};

@@ -1,4 +1,11 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -189,6 +196,8 @@ describe("Docker sandbox verification service", () => {
     const project = await createProject("2.0.0");
     await writeFile(path.join(project, ".env"), "NOT_FOR_SANDBOX=true");
     await writeFile(path.join(project, ".npmrc"), "//registry:token=secret");
+    await writeFile(path.join(project, "private.key"), "not-for-copy");
+    await symlink("private.key", path.join(project, "secret-link"));
     await mkdir(path.join(project, "node_modules"), { recursive: true });
     await writeFile(
       path.join(project, "node_modules/vulnerable"),
@@ -199,6 +208,12 @@ describe("Docker sandbox verification service", () => {
 
     await expect(readFile(path.join(snapshot, ".env"))).rejects.toThrow();
     await expect(readFile(path.join(snapshot, ".npmrc"))).rejects.toThrow();
+    await expect(
+      readFile(path.join(snapshot, "secret-link")),
+    ).rejects.toThrow();
+    await expect(
+      readFile(path.join(snapshot, "private.key")),
+    ).rejects.toThrow();
     expect(
       await readFile(path.join(snapshot, "package.json"), "utf8"),
     ).toContain("vulnerable");

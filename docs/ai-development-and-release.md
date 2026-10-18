@@ -21,9 +21,9 @@ and these project rules:
 The optional runtime LLM repair feature is separate from AI-assisted software
 development. It requires `ANTHROPIC_API_KEY`; `ANTHROPIC_MODEL` can select the
 configured model. Its context and patches are constrained in code, but a
-human must still review results. A Docker-backed baseline verifier exists as a
-library component; automatic fix CLI/Action behavior remains unavailable until
-the remediation flow is wired to it end-to-end.
+human must still review results. The automated CLI/Action upgrade path is
+deterministic and uses the Docker-backed baseline verifier; it does not invoke
+the LLM-assisted code migration component.
 
 ## Release checklist
 

@@ -135,7 +135,11 @@ export interface UpgradePlan {
   targetVersion: string;
   filePath: string;
   packageSection:
-    "dependencies" | "devDependencies" | "optionalDependencies" | "overrides";
+    | "dependencies"
+    | "devDependencies"
+    | "optionalDependencies"
+    | "overrides"
+    | "pnpm.overrides";
 }
 
 export type VerificationStatus = "VERIFIED" | "FAILED" | "INCONCLUSIVE";

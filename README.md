@@ -28,11 +28,11 @@ node dist/cli/index.js fix [path] [--advisory <id>] [--pr]
 node dist/cli/index.js bench <dataset>
 ```
 
-`scan --format` accepts `text`, `json`, `sarif`, or `markdown`. `--fail-on` accepts `reachable` (default), `unknown`, `any`, or `never`. Exit codes are `0` when the threshold is not met, `1` when it is met, and `2` for a tool error. `fix` remains a placeholder and returns exit code `2`.
+`scan --format` accepts `text`, `json`, `sarif`, or `markdown`. `--fail-on` accepts `reachable` (default), `unknown`, `any`, or `never`. Exit codes are `0` when the threshold is not met, `1` when it is met, and `2` for a tool error. `fix` considers reachable findings only, selects a fixed version reported by OSV, updates a temporary copy, and applies only package manifest/lockfile changes after Docker verification against a clean baseline. `fix --pr` also creates a branch, commits those files, pushes it, and opens a pull request with GitHub CLI; it requires a clean Git worktree, `gh` authentication, and `contents: write`/`pull-requests: write` permissions.
 
 ### GitHub Action
 
-Use the example workflow at [examples/reachfix.yml](./examples/reachfix.yml). Grant `security-events: write` to upload SARIF. The action scans by default and uploads a SARIF 2.1.0 report. `fix: true` is deliberately rejected without applying changes: verified PR generation remains gated until the sandbox verifier is integrated end-to-end.
+Use the example workflow at [examples/reachfix.yml](./examples/reachfix.yml). Grant `security-events: write` to upload SARIF. The action scans by default and uploads a SARIF 2.1.0 report. The example keeps `fix: false`; opt in with `fix: true` to open a PR only after a reachable dependency upgrade passes Docker verification. This additionally requires `contents: write` and `pull-requests: write` workflow permissions and GitHub CLI authentication. The scan threshold is still evaluated after PR creation and may fail the workflow until the fix is merged and rescanned.
 
 ## Implemented milestones
 
@@ -45,8 +45,9 @@ Use the example workflow at [examples/reachfix.yml](./examples/reachfix.yml). Gr
 - **M6:** text, JSON, SARIF 2.1.0, and Markdown reports; CLI scan thresholds; and a GitHub Action for SARIF upload.
 - **M7:** pinned-commit benchmark runner, npm audit comparison, conservative metrics, case templates, and generated README table.
 - **M8:** architecture and limitations documentation, benchmark metric definitions, AI-assisted development safeguards, and a release checklist.
+- **M9:** deterministic reachable-dependency upgrades staged before application, Docker baseline verification, and optional GitHub CLI PR creation.
 
-Verified fix pull requests remain gated on end-to-end remediation integration. See [Limitations and interpreting results](./docs/limitations.md) before relying on scan or benchmark output.
+Fixes are limited to a single direct or transitive dependency per invocation. Code-level fixes and multi-advisory remediation are not automated. See [Limitations and interpreting results](./docs/limitations.md) before relying on scan or benchmark output.
 
 ### Benchmark (M7)
 

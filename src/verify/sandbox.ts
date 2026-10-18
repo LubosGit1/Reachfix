@@ -1,4 +1,5 @@
 import { execFile as nodeExecFile } from "node:child_process";
+import { lstatSync } from "node:fs";
 import { cp, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -380,6 +381,9 @@ async function copyProject(
       const relativePath = path.relative(source, entryPath);
       if (!relativePath) {
         return true;
+      }
+      if (lstatSync(entryPath).isSymbolicLink()) {
+        return false;
       }
       const segments = relativePath.split(path.sep);
       const name = segments.at(-1) ?? "";
