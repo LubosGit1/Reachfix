@@ -96,12 +96,23 @@ describe("fix repair service", () => {
   it("replays verification feedback and verifies the second patch", async () => {
     const projectPath = await createProject();
     const model = new ReplayModel([sourcePatch(1, 2), sourcePatch(2, 3)]);
-    const verify = vi
-      .fn()
-      .mockResolvedValueOnce(
-        verifiedResult("FAILED", "Typecheck failed on line 1."),
-      )
-      .mockResolvedValueOnce(verifiedResult("VERIFIED", "All checks passed."));
+    const baselineContents: string[] = [];
+    const verify = vi.fn(
+      async (
+        _projectPath: string,
+        _dependencyName: string,
+        _targetVersion: string,
+        _attempt: number,
+        baselineProjectPath: string,
+      ) => {
+        baselineContents.push(
+          await readFile(path.join(baselineProjectPath, "entry.ts"), "utf8"),
+        );
+        return baselineContents.length === 1
+          ? verifiedResult("FAILED", "Typecheck failed on line 1.")
+          : verifiedResult("VERIFIED", "All checks passed.");
+      },
+    );
     const usage = vi.fn();
     const service = new FixRepairService({ model, verify, onUsage: usage });
 
@@ -129,6 +140,10 @@ describe("fix repair service", () => {
     expect(await readFile(path.join(projectPath, "entry.ts"), "utf8")).toBe(
       "export const value = 3;\n",
     );
+    expect(baselineContents).toEqual([
+      "export const value = 1;\n",
+      "export const value = 1;\n",
+    ]);
     expect(usage).toHaveBeenCalledTimes(2);
   });
 
@@ -182,5 +197,34 @@ describe("fix repair service", () => {
       }),
     ).rejects.toMatchObject({ code: "COST_LIMIT_EXCEEDED" });
     expect(model.contexts).toHaveLength(1);
+  });
+
+  it("does not retry or report success when verification is inconclusive", async () => {
+    const projectPath = await createProject();
+    const model = new ReplayModel([sourcePatch(1, 2), sourcePatch(2, 3)]);
+    const verify = vi
+      .fn()
+      .mockResolvedValue(
+        verifiedResult("INCONCLUSIVE", "Docker is unavailable."),
+      );
+    const service = new FixRepairService({ model, verify });
+
+    const result = await service.repair({
+      projectPath,
+      advisory,
+      dependencyName: "vulnerable",
+      fromVersion: "2.0.0",
+      targetVersion: "2.2.0",
+      callSites: [{ filePath: "entry.ts" }],
+      maxCostUsd: 0.1,
+    });
+
+    expect(result).toMatchObject({
+      status: "INCONCLUSIVE",
+      attempts: 1,
+      error: "Docker is unavailable.",
+    });
+    expect(model.contexts).toHaveLength(1);
+    expect(verify).toHaveBeenCalledTimes(1);
   });
 });

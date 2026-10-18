@@ -42,10 +42,12 @@ The repository contains a deterministic upgrade planner,
 [`src/fix/upgrade-planner.ts`](../src/fix/upgrade-planner.ts), a constrained
 context builder, and an optional Anthropic client and repair loop. Model
 responses are schema-validated and patches are restricted to approved files.
-The verification helper currently checks the manifest version; it does not
-provide the required isolated install, tests, or Docker baseline comparison.
-Consequently, the `fix` CLI command is not implemented and the GitHub Action
-rejects `fix: true` without applying changes.
+[`src/verify/sandbox.ts`](../src/verify/sandbox.ts) provides an injected,
+Docker-backed baseline/candidate verifier. It installs dependencies with
+lifecycle scripts disabled, then runs test/build checks in a resource-limited,
+network-isolated container. The repair loop captures and passes a clean
+baseline snapshot to its injected verifier. The `fix` CLI command and Action
+are not yet wired to this verifier, so both still decline automatic fixes.
 
 ## GitHub Action
 

@@ -2,7 +2,7 @@
 
 reachfix is an open-source TypeScript CLI and GitHub Action planned to identify vulnerable npm dependencies, analyze whether vulnerable code is reachable, and verify defensive fixes.
 
-> **Project status:** early implementation (milestones M0–M8). `scan` inventories dependencies, queries OSV, and reports import/symbol reachability. Terminal, JSON, SARIF 2.1.0, and Markdown formats are available. The GitHub Action scans and uploads SARIF. Automatic fixes and PR creation remain disabled until fixes can be verified in the required Docker sandbox.
+> **Project status:** early implementation (milestones M0–M8). `scan` inventories dependencies, queries OSV, and reports import/symbol reachability. Terminal, JSON, SARIF 2.1.0, and Markdown formats are available. The GitHub Action scans and uploads SARIF. A Docker baseline verifier is available as a library component; automatic fixes and PR creation remain disabled until the end-to-end remediation interface is wired to it.
 
 Documentation: [architecture](./docs/architecture.md), [limitations and result interpretation](./docs/limitations.md), [AI-assisted development and release process](./docs/ai-development-and-release.md), and the full [project specification](./SPEC.md).
 
@@ -32,7 +32,7 @@ node dist/cli/index.js bench <dataset>
 
 ### GitHub Action
 
-Use the example workflow at [examples/reachfix.yml](./examples/reachfix.yml). Grant `security-events: write` to upload SARIF. The action scans by default and uploads a SARIF 2.1.0 report. `fix: true` is deliberately rejected without applying changes: verified PR generation must wait for the isolated Docker verification milestone.
+Use the example workflow at [examples/reachfix.yml](./examples/reachfix.yml). Grant `security-events: write` to upload SARIF. The action scans by default and uploads a SARIF 2.1.0 report. `fix: true` is deliberately rejected without applying changes: verified PR generation remains gated until the sandbox verifier is integrated end-to-end.
 
 ## Implemented milestones
 
@@ -40,13 +40,13 @@ Use the example workflow at [examples/reachfix.yml](./examples/reachfix.yml). Gr
 - **M1:** npm package-lock v2/v3 and pnpm lockfile inventory, OSV.dev queries, and 24-hour cache.
 - **M2:** import-level reachability for ESM, CommonJS, literal dynamic imports, and re-exports.
 - **M3:** initial symbol/call-site analysis.
-- **M4:** deterministic dependency upgrade/override plans and version verification.
+- **M4:** deterministic dependency upgrade/override plans, lockfile target checks, and Docker-isolated baseline/candidate verification.
 - **M5:** optional Anthropic-assisted code fixes with restricted context, validated diffs, a three-attempt feedback loop, and a configured cost ceiling.
 - **M6:** text, JSON, SARIF 2.1.0, and Markdown reports; CLI scan thresholds; and a GitHub Action for SARIF upload.
 - **M7:** pinned-commit benchmark runner, npm audit comparison, conservative metrics, case templates, and generated README table.
 - **M8:** architecture and limitations documentation, benchmark metric definitions, AI-assisted development safeguards, and a release checklist.
 
-Verified fix pull requests remain gated on the Docker sandbox. See [Limitations and interpreting results](./docs/limitations.md) before relying on scan or benchmark output.
+Verified fix pull requests remain gated on end-to-end remediation integration. See [Limitations and interpreting results](./docs/limitations.md) before relying on scan or benchmark output.
 
 ### Benchmark (M7)
 

@@ -10,6 +10,10 @@ import {
   applyValidatedPatch,
   validateGeneratedFix,
 } from "./patch-validator.js";
+import {
+  createSandboxSnapshot,
+  removeSandboxSnapshot,
+} from "../verify/sandbox.js";
 
 const MAX_ATTEMPTS = 3;
 
@@ -27,7 +31,7 @@ export interface FixRepairInput extends FixContextInput {
 }
 
 export interface FixRepairResult {
-  status: "VERIFIED" | "FAILED";
+  status: "VERIFIED" | "FAILED" | "INCONCLUSIVE";
   dependencyName: string;
   targetVersion: string;
   attempts: number;
@@ -45,6 +49,7 @@ export interface FixRepairServices {
     dependencyName: string,
     targetVersion: string,
     attempt: number,
+    baselineProjectPath: string,
   ): Promise<VerificationResult>;
   onUsage?(usage: FixUsageLog): void;
 }
@@ -66,6 +71,18 @@ export class FixRepairService {
       );
     }
 
+    const baselineProjectPath = await createSandboxSnapshot(input.projectPath);
+    try {
+      return await this.repairAgainstBaseline(input, baselineProjectPath);
+    } finally {
+      await removeSandboxSnapshot(baselineProjectPath);
+    }
+  }
+
+  private async repairAgainstBaseline(
+    input: FixRepairInput,
+    baselineProjectPath: string,
+  ): Promise<FixRepairResult> {
     let cumulativeCostUsd = 0;
     let verification: VerificationResult | undefined;
     let rationale: string | undefined;
@@ -157,6 +174,7 @@ export class FixRepairService {
         input.dependencyName,
         input.targetVersion,
         attempt,
+        baselineProjectPath,
       );
       if (verification.status === "VERIFIED") {
         return {
@@ -167,6 +185,18 @@ export class FixRepairService {
           estimatedCostUsd: cumulativeCostUsd,
           verification,
           rationale,
+        };
+      }
+      if (verification.status === "INCONCLUSIVE") {
+        return {
+          status: "INCONCLUSIVE",
+          dependencyName: input.dependencyName,
+          targetVersion: input.targetVersion,
+          attempts: attempt,
+          estimatedCostUsd: cumulativeCostUsd,
+          verification,
+          ...(rationale ? { rationale } : {}),
+          error: verification.message,
         };
       }
       lastFailure = `${verification.status}: ${verification.message}`;

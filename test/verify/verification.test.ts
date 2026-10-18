@@ -24,12 +24,20 @@ describe("verification service", () => {
       path.join(projectPath, "package.json"),
       JSON.stringify({ dependencies: { vulnerable: "^2.3.0" } }, null, 2),
     );
+    await writeFile(
+      path.join(projectPath, "package-lock.json"),
+      JSON.stringify({
+        lockfileVersion: 3,
+        packages: { "node_modules/vulnerable": { version: "2.3.0" } },
+      }),
+    );
 
     const service = new VerificationService();
     const result = await service.verify(projectPath, "vulnerable", "2.2.0");
 
-    expect(result.status).toBe("VERIFIED");
+    expect(result.status).toBe("INCONCLUSIVE");
     expect(result.version).toBe("2.3.0");
+    expect(result.message).toContain("isolated install and test verification");
   });
 
   it("fails when the dependency remains below the target version", async () => {
@@ -38,6 +46,13 @@ describe("verification service", () => {
     await writeFile(
       path.join(projectPath, "package.json"),
       JSON.stringify({ dependencies: { vulnerable: "^2.0.0" } }, null, 2),
+    );
+    await writeFile(
+      path.join(projectPath, "package-lock.json"),
+      JSON.stringify({
+        lockfileVersion: 3,
+        packages: { "node_modules/vulnerable": { version: "2.0.0" } },
+      }),
     );
 
     const service = new VerificationService();

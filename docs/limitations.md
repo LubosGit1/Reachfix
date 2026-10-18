@@ -37,11 +37,18 @@ the finding and its evidence.
 ## Fix and verification status
 
 The planner and LLM-assisted patch pipeline are building blocks, not a
-production automated remediation command. `fix` is still a placeholder, the
-GitHub Action rejects `fix: true`, and no patch is applied by those interfaces.
-The current manifest-version check alone is not sufficient to verify a fix.
-Docker-isolated dependency installation, baseline comparison, and test
-verification are not implemented; do not infer that a fix has passed them.
+production automated remediation command. A Docker verifier is available as a
+library component and compares lockfile resolution and test/build outcomes
+against a clean baseline snapshot. Dependency installation runs with lifecycle
+scripts disabled; project test/build scripts execute only in containers with
+network access disabled and resource limits. If the baseline cannot install or
+pass checks, the result is `INCONCLUSIVE`.
+
+`fix` is still a placeholder, the GitHub Action rejects `fix: true`, and no
+patch is applied by those interfaces. Do not infer that a fix has passed
+verification until a supported remediation workflow uses the sandbox verifier.
+Some dependencies require install lifecycle scripts or network access during
+tests; those projects may not be verifiable by this conservative sandbox.
 
 ## Benchmark results
 

@@ -1,6 +1,6 @@
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import semver from "semver";
+import { parseLockfile } from "../inventory/lockfile-parser.js";
 import type { VerificationResult } from "../types.js";
 
 export class VerificationService {
@@ -9,70 +9,63 @@ export class VerificationService {
     dependencyName: string,
     expectedVersion: string,
   ): Promise<VerificationResult> {
-    const packageJsonPath = path.join(projectPath, "package.json");
-    let manifest: {
-      dependencies?: Record<string, string>;
-      devDependencies?: Record<string, string>;
-      optionalDependencies?: Record<string, string>;
-      overrides?: Record<string, string>;
-    };
-
-    try {
-      const raw = await readFile(packageJsonPath, "utf8");
-      manifest = JSON.parse(raw) as typeof manifest;
-    } catch {
-      return {
-        status: "INCONCLUSIVE",
-        dependencyName,
-        version: "unknown",
-        expectedVersion,
-        message: `The package manifest in ${packageJsonPath} could not be read.`,
-      };
+    const inconclusive = (
+      version: string,
+      message: string,
+    ): VerificationResult => ({
+      status: "INCONCLUSIVE",
+      dependencyName,
+      version,
+      expectedVersion,
+      message,
+    });
+    if (!semver.valid(expectedVersion)) {
+      return inconclusive(
+        "unknown",
+        `The target version ${expectedVersion} is not valid semver.`,
+      );
     }
 
-    const candidateVersions = [
-      manifest.dependencies?.[dependencyName],
-      manifest.devDependencies?.[dependencyName],
-      manifest.optionalDependencies?.[dependencyName],
-      manifest.overrides?.[dependencyName],
-    ].filter(
-      (value): value is string => typeof value === "string" && value.length > 0,
+    let inventory;
+    try {
+      inventory = await parseLockfile(path.resolve(projectPath));
+    } catch {
+      return inconclusive(
+        "unknown",
+        "The project lockfile could not be read to verify the resolved dependency version.",
+      );
+    }
+
+    const versions = inventory.dependencies
+      .filter(({ name }) => name === dependencyName)
+      .map(({ version }) => version)
+      .filter((version) => semver.valid(version) !== null);
+    const belowTarget = versions.find(
+      (version) => !semver.gte(version, expectedVersion),
     );
-
-    const resolvedVersion = candidateVersions
-      .map((versionRange) => semver.validRange(versionRange))
-      .find((range) => range !== null)
-      ? candidateVersions[0]
-      : undefined;
-
-    if (!resolvedVersion) {
+    if (belowTarget) {
+      return {
+        status: "FAILED",
+        dependencyName,
+        version: belowTarget,
+        expectedVersion,
+        message: `${dependencyName} still resolves below ${expectedVersion}.`,
+      };
+    }
+    if (versions.length === 0) {
       return {
         status: "FAILED",
         dependencyName,
         version: "not-found",
         expectedVersion,
-        message: `No dependency or override entry was found for ${dependencyName}.`,
+        message: `No resolved lockfile entry was found for ${dependencyName}.`,
       };
     }
 
-    const coercedVersion =
-      semver.coerce(resolvedVersion)?.version ?? resolvedVersion;
-    if (semver.gte(coercedVersion, expectedVersion)) {
-      return {
-        status: "VERIFIED",
-        dependencyName,
-        version: coercedVersion,
-        expectedVersion,
-        message: `${dependencyName} is pinned to or beyond ${expectedVersion}.`,
-      };
-    }
-
-    return {
-      status: "FAILED",
-      dependencyName,
-      version: coercedVersion,
-      expectedVersion,
-      message: `${dependencyName} is still below the target version ${expectedVersion}.`,
-    };
+    const version = [...versions].sort(semver.compare).at(-1) ?? "unknown";
+    return inconclusive(
+      version,
+      `${dependencyName} resolves to ${version}, but isolated install and test verification has not been run.`,
+    );
   }
 }
