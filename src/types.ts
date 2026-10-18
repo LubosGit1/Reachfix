@@ -75,6 +75,58 @@ export interface ScanResult {
 
 export type ScanFailThreshold = "reachable" | "unknown" | "any" | "never";
 
+export interface BenchmarkCase {
+  id: string;
+  repository: string;
+  commit: string;
+  advisoryId: string;
+  expectedVerdict: ReachabilityVerdict;
+  rationale: string;
+}
+
+export interface BenchmarkCaseResult {
+  caseId: string;
+  repository: string;
+  commit: string;
+  advisoryId: string;
+  expectedVerdict: ReachabilityVerdict;
+  actualVerdict: ReachabilityVerdict;
+  npmAuditVulnerabilityCount: number;
+  reachfixFindingCount: number;
+  elapsedMs: number;
+  apiCostUsd: number;
+  fixAttempted: boolean;
+  fixVerified: boolean;
+  reason: string;
+}
+
+export interface BenchmarkMetrics {
+  caseCount: number;
+  reachableGroundTruthCount: number;
+  reachablePredictionsPreserved: number;
+  reachablePredictionsLost: number;
+  falseReachableCount: number;
+  reachabilityRecall: number | null;
+  reachablePrecision: number | null;
+  npmAuditVulnerabilityCount: number;
+  reachfixReportedCount: number;
+  alertReduction: number | null;
+  fixAttemptCount: number;
+  verifiedFixCount: number;
+  fixSuccessRate: number | null;
+  medianTimeMs: number;
+  averageApiCostUsd: number;
+}
+
+export interface BenchmarkRun {
+  schemaVersion: "1.0";
+  startedAt: string;
+  completedAt: string;
+  datasetPath: string;
+  results: BenchmarkCaseResult[];
+  metrics: BenchmarkMetrics;
+}
+
 export type FixStrategy = "upgrade" | "override" | "manual-code-fix";
 
 export interface UpgradePlan {

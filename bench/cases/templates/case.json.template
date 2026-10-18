@@ -1,0 +1,8 @@
+{
+  "id": "replace-with-case-id",
+  "repository": "https://github.com/OWNER/REPOSITORY",
+  "commit": "0000000000000000000000000000000000000000",
+  "advisoryId": "GHSA-or-OSV-ID",
+  "expectedVerdict": "UNKNOWN",
+  "rationale": "Manually establish and document why this advisory is or is not reachable at this exact commit."
+}

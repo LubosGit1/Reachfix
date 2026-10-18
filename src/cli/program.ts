@@ -7,6 +7,7 @@ import { renderMarkdownReport } from "../report/markdown.js";
 import { createSarifReport, renderSarifReport } from "../report/sarif.js";
 import { renderTerminalReport } from "../report/terminal.js";
 import type { ScanFailThreshold } from "../types.js";
+import { runBenchmarkDataset } from "../bench/runner.js";
 
 export function createProgram(): Command {
   const program = new Command();
@@ -81,9 +82,20 @@ export function createProgram(): Command {
 
   program
     .command("bench")
-    .description("Run a benchmark dataset.")
-    .argument("<dataset>", "benchmark dataset")
-    .action(() => markUnimplemented("bench"));
+    .description("Run a manually labeled benchmark dataset.")
+    .argument("<dataset>", "directory containing benchmark case JSON files")
+    .action(async (dataset: string) => {
+      const { run, resultsPath } = await runBenchmarkDataset({
+        casesPath: dataset,
+      });
+      process.stdout.write(
+        `Benchmark saved to ${resultsPath}\n` +
+          `Cases: ${run.metrics.caseCount}\n` +
+          `Reachability recall: ${formatPercent(run.metrics.reachabilityRecall)}\n` +
+          `Reachable precision: ${formatPercent(run.metrics.reachablePrecision)}\n` +
+          `Alert reduction: ${formatPercent(run.metrics.alertReduction)}\n`,
+      );
+    });
 
   return program;
 }
@@ -132,6 +144,10 @@ export function shouldFailScan(
     case "never":
       return false;
   }
+}
+
+function formatPercent(value: number | null): string {
+  return value === null ? "n/a" : `${(value * 100).toFixed(1)}%`;
 }
 
 function markUnimplemented(commandName: string): void {

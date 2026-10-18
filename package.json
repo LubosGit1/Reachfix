@@ -17,6 +17,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "bench": "pnpm build && node dist/cli/index.js bench",
+    "bench:report": "pnpm build && node dist/bench/report-cli.js",
+    "bench:case": "pnpm build && node dist/bench/template-cli.js",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
