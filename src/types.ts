@@ -65,3 +65,24 @@ export interface ImportReachabilityResult {
   reason: string;
   evidence: ImportEvidence[];
 }
+
+export type FixStrategy = "upgrade" | "override" | "manual-code-fix";
+
+export interface UpgradePlan {
+  strategy: FixStrategy;
+  dependencyName: string;
+  targetVersion: string;
+  filePath: string;
+  packageSection:
+    "dependencies" | "devDependencies" | "optionalDependencies" | "overrides";
+}
+
+export type VerificationStatus = "VERIFIED" | "FAILED" | "INCONCLUSIVE";
+
+export interface VerificationResult {
+  status: VerificationStatus;
+  dependencyName: string;
+  version: string;
+  expectedVersion: string;
+  message: string;
+}
