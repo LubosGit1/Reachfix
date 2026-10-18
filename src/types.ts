@@ -50,3 +50,18 @@ export interface AdvisoryFinding {
   dependency: DependencyNode;
   advisories: Advisory[];
 }
+
+export type ReachabilityVerdict = "REACHABLE" | "NOT_REACHABLE" | "UNKNOWN";
+
+export interface ImportEvidence {
+  filePath: string;
+  importType: "import" | "require" | "dynamic-import" | "export";
+  statement: string;
+}
+
+export interface ImportReachabilityResult {
+  dependencyName: string;
+  verdict: ReachabilityVerdict;
+  reason: string;
+  evidence: ImportEvidence[];
+}
