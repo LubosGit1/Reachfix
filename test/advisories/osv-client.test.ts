@@ -99,6 +99,53 @@ describe("OSV advisory client", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  it("fetches advisory details when batch results contain only IDs", async () => {
+    const fetch = vi.fn(
+      async (_input: string | URL | Request, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          return new Response(
+            JSON.stringify({
+              results: [
+                { vulns: [{ id: "GHSA-test-1234", modified: "2024-01-01" }] },
+                { vulns: [{ id: "GHSA-test-1234", modified: "2024-01-01" }] },
+              ],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          );
+        }
+        return new Response(JSON.stringify(advisoryResponse), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      },
+    );
+    const client = new OsvAdvisoryClient({
+      cacheDirectory: await createCacheDirectory(),
+      fetch,
+    });
+    const dependencies: DependencyNode[] = ["2.0.0", "2.1.0"].map(
+      (version) => ({
+        name: "vulnerable",
+        version,
+        lockfilePath: "node_modules/vulnerable",
+        isDirect: true,
+        dependencies: [],
+      }),
+    );
+
+    const findings = await client.findVulnerabilities(dependencies);
+
+    expect(findings).toHaveLength(2);
+    expect(findings.map(({ advisories }) => advisories[0]?.id)).toEqual([
+      "GHSA-test-1234",
+      "GHSA-test-1234",
+    ]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[1]?.[0].toString()).toBe(
+      "https://api.osv.dev/v1/vulns/GHSA-test-1234",
+    );
+  });
+
   it("refreshes expired cache entries", async () => {
     const cacheDirectory = await createCacheDirectory();
     const fetch = vi.fn(async () => responseForQueries(1));

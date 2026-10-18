@@ -16,6 +16,7 @@ import type {
 const DEFAULT_ENDPOINT = "https://api.osv.dev/v1/querybatch";
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_BATCH_SIZE = 1000;
+const ADVISORY_FETCH_CONCURRENCY = 20;
 
 export interface OsvClientOptions {
   cacheDirectory?: string;
@@ -161,7 +162,8 @@ export class OsvAdvisoryClient {
       );
     }
 
-    return payload.results.map((result) => {
+    const advisoriesById = new Map<string, Advisory>();
+    const idsByQuery = payload.results.map((result) => {
       if (!isRecord(result)) {
         throw new OsvClientError(
           "INVALID_RESPONSE",
@@ -177,8 +179,101 @@ export class OsvAdvisoryClient {
           "OSV.dev returned an invalid vulnerabilities list.",
         );
       }
-      return result.vulns.map(parseAdvisory);
+      return result.vulns.map((vulnerability) => {
+        if (!isRecord(vulnerability) || typeof vulnerability.id !== "string") {
+          throw new OsvClientError(
+            "INVALID_RESPONSE",
+            "OSV.dev returned a vulnerability without an ID.",
+          );
+        }
+        if (Array.isArray(vulnerability.affected)) {
+          const advisory = parseAdvisory(vulnerability);
+          advisoriesById.set(advisory.id, advisory);
+        }
+        return vulnerability.id;
+      });
     });
+
+    const ids = [...new Set(idsByQuery.flat())];
+    const missingIds = ids.filter((id) => !advisoriesById.has(id));
+    for (
+      let offset = 0;
+      offset < missingIds.length;
+      offset += ADVISORY_FETCH_CONCURRENCY
+    ) {
+      const batch = missingIds.slice(
+        offset,
+        offset + ADVISORY_FETCH_CONCURRENCY,
+      );
+      await Promise.all(
+        batch.map(async (id) => {
+          const advisory = await this.fetchAdvisory(id);
+          advisoriesById.set(id, advisory);
+        }),
+      );
+    }
+    return idsByQuery.map((queryIds) =>
+      queryIds.flatMap((id) => {
+        const advisory = advisoriesById.get(id);
+        return advisory ? [advisory] : [];
+      }),
+    );
+  }
+
+  private async fetchAdvisory(id: string): Promise<Advisory> {
+    let url: URL;
+    try {
+      url = new URL(this.endpoint);
+      url.pathname = url.pathname.replace(
+        /\/querybatch\/?$/,
+        `/vulns/${encodeURIComponent(id)}`,
+      );
+    } catch (error) {
+      throw new OsvClientError(
+        "INVALID_RESPONSE",
+        "The configured OSV endpoint is not a valid URL.",
+        { cause: error },
+      );
+    }
+
+    let response: Response;
+    try {
+      response = await this.fetchImpl(url, {
+        headers: { accept: "application/json" },
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch (error) {
+      throw new OsvClientError(
+        "REQUEST_FAILED",
+        "Could not fetch an OSV.dev advisory.",
+        { cause: error },
+      );
+    }
+    if (!response.ok) {
+      throw new OsvClientError(
+        "REQUEST_FAILED",
+        `OSV.dev returned HTTP ${response.status} for advisory ${id}.`,
+      );
+    }
+
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch (error) {
+      throw new OsvClientError(
+        "INVALID_RESPONSE",
+        `OSV.dev returned invalid JSON for advisory ${id}.`,
+        { cause: error },
+      );
+    }
+    const advisory = parseAdvisory(payload);
+    if (advisory.id !== id) {
+      throw new OsvClientError(
+        "INVALID_RESPONSE",
+        `OSV.dev returned advisory ${advisory.id} when ${id} was requested.`,
+      );
+    }
+    return advisory;
   }
 
   private async readCache(key: string): Promise<Advisory[] | undefined> {
