@@ -30,7 +30,7 @@ Out of scope: exploit or proof-of-concept generation, dynamic analysis, fuzzing,
 3. **M2 – Import reachability:** analyze ESM, CommonJS, dynamic literal imports, and re-exports.
 4. **M3 – Symbols and call paths:** map advisories to symbols and conservatively trace call paths.
 5. **M4 – Deterministic fixes and verification:** upgrades, overrides, sandbox baseline, and comparison.
-6. **M5 – LLM-assisted fixes:** schema-validated diffs, restricted context, feedback, and cost limits.
+6. **M5 – LLM-assisted fixes:** use `@anthropic-ai/sdk` with a configurable model and `ANTHROPIC_API_KEY`; provide only the advisory, release notes, target type definitions, and call-site files. Validate tool output with Zod, apply exact unified diffs restricted to call sites and `package.json`, prohibit new dependencies and model-proposed commands, retry verification feedback at most three times, and enforce/log `maxCostUsd`.
 7. **M6 – Reports and GitHub Action:** output formats, SARIF upload, and opt-in pull requests.
 8. **M7 – Benchmark:** reproducible, manually labeled cases and generated metrics.
 9. **M8 – Documentation and release:** explain architecture, limits, results, and AI-assisted development.

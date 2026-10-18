@@ -8,3 +8,4 @@
 - Add focused Vitest coverage for new behavior and keep lint, typecheck, tests, formatting, and build passing with `pnpm check`.
 - Reachability uncertainty must never be reported as `NOT_REACHABLE`.
 - Do not generate exploit code, proof-of-concept attacks, or payloads.
+- Validate every LLM-generated diff against the call-site allowlist; never execute model-proposed commands.
