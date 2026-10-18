@@ -2,7 +2,9 @@
 
 reachfix is an open-source TypeScript CLI and GitHub Action planned to identify vulnerable npm dependencies, analyze whether vulnerable code is reachable, and verify defensive fixes.
 
-> **Project status:** early implementation (milestones M0–M7). `scan` inventories dependencies, queries OSV, and reports import/symbol reachability. Terminal, JSON, SARIF 2.1.0, and Markdown formats are available. The GitHub Action scans and uploads SARIF. Automatic fixes and PR creation remain disabled until fixes can be verified in the required Docker sandbox.
+> **Project status:** early implementation (milestones M0–M8). `scan` inventories dependencies, queries OSV, and reports import/symbol reachability. Terminal, JSON, SARIF 2.1.0, and Markdown formats are available. The GitHub Action scans and uploads SARIF. Automatic fixes and PR creation remain disabled until fixes can be verified in the required Docker sandbox.
+
+Documentation: [architecture](./docs/architecture.md), [limitations and result interpretation](./docs/limitations.md), [AI-assisted development and release process](./docs/ai-development-and-release.md), and the full [project specification](./SPEC.md).
 
 ## Requirements
 
@@ -14,6 +16,7 @@ reachfix is an open-source TypeScript CLI and GitHub Action planned to identify 
 ```sh
 pnpm install
 pnpm check
+pnpm build
 ```
 
 The current CLI surface is:
@@ -41,8 +44,9 @@ Use the example workflow at [examples/reachfix.yml](./examples/reachfix.yml). Gr
 - **M5:** optional Anthropic-assisted code fixes with restricted context, validated diffs, a three-attempt feedback loop, and a configured cost ceiling.
 - **M6:** text, JSON, SARIF 2.1.0, and Markdown reports; CLI scan thresholds; and a GitHub Action for SARIF upload.
 - **M7:** pinned-commit benchmark runner, npm audit comparison, conservative metrics, case templates, and generated README table.
+- **M8:** architecture and limitations documentation, benchmark metric definitions, AI-assisted development safeguards, and a release checklist.
 
-M8 (release documentation and publishing) remains planned. Verified fix pull requests remain gated on the Docker sandbox. See [SPEC.md](./SPEC.md) for the complete product scope and safety requirements.
+Verified fix pull requests remain gated on the Docker sandbox. See [Limitations and interpreting results](./docs/limitations.md) before relying on scan or benchmark output.
 
 ### Benchmark (M7)
 
