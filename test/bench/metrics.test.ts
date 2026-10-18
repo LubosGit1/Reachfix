@@ -27,12 +27,31 @@ describe("benchmark metrics", () => {
     );
   });
 
+  it("counts each repository commit once when cases repeat its totals", () => {
+    const first = {
+      ...makeResult("REACHABLE", "REACHABLE", 4, 100),
+      reachfixFindingCount: 2,
+    };
+    const repeated = {
+      ...first,
+      caseId: "same-project-second-advisory",
+      elapsedMs: 200,
+    };
+    const metrics = calculateBenchmarkMetrics([first, repeated]);
+
+    expect(metrics.npmAuditVulnerabilityCount).toBe(4);
+    expect(metrics.reachfixReportedCount).toBe(2);
+    expect(metrics.alertReduction).toBe(0.5);
+    expect(metrics.averageApiCostUsd).toBeNull();
+  });
+
   it("leaves undefined ratios null when their denominator is zero", () => {
     const metrics = calculateBenchmarkMetrics([]);
     expect(metrics.reachabilityRecall).toBeNull();
     expect(metrics.reachablePrecision).toBeNull();
     expect(metrics.alertReduction).toBeNull();
     expect(metrics.fixSuccessRate).toBeNull();
+    expect(metrics.averageApiCostUsd).toBeNull();
     expect(metrics.medianTimeMs).toBe(0);
   });
 });
@@ -46,14 +65,14 @@ function makeResult(
   return {
     caseId: `${expectedVerdict}-${actualVerdict}-${elapsedMs}`,
     repository: "https://github.com/owner/repository",
-    commit: "0".repeat(40),
+    commit: elapsedMs.toString().padStart(40, "0"),
     advisoryId: "GHSA-example",
     expectedVerdict,
     actualVerdict,
     npmAuditVulnerabilityCount,
     reachfixFindingCount: 1,
     elapsedMs,
-    apiCostUsd: 0,
+    apiCostUsd: null,
     fixAttempted: false,
     fixVerified: false,
     reason: "test fixture",

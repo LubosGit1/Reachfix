@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { ScanResult } from "../types.js";
+import { selectPrimaryEvidence } from "./evidence.js";
 
 interface SarifLocation {
   physicalLocation: {
@@ -101,7 +102,7 @@ function toSarifResult(result: ScanResult, projectPath: string): SarifResult {
       : reachability.verdict === "UNKNOWN"
         ? "warning"
         : "note";
-  const evidence = reachability.evidence[0];
+  const evidence = selectPrimaryEvidence(reachability.evidence);
   const filePath = evidence
     ? relativeArtifactPath(path.resolve(projectPath), evidence.filePath)
     : undefined;

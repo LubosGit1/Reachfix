@@ -31,12 +31,14 @@ describe("benchmark report", () => {
         metrics: {
           caseCount: 49,
           reachableGroundTruthCount: 15,
+          npmAuditVulnerabilityCount: 12,
+          reachfixReportedCount: 7,
           reachabilityRecall: 1,
           reachablePrecision: 0.5,
           alertReduction: null,
           fixSuccessRate: null,
           medianTimeMs: 12.4,
-          averageApiCostUsd: 0,
+          averageApiCostUsd: null,
         },
       }),
     );
@@ -54,18 +56,20 @@ describe("benchmark report", () => {
         metrics: {
           caseCount: 50,
           reachableGroundTruthCount: 15,
+          npmAuditVulnerabilityCount: 21,
+          reachfixReportedCount: 10,
           reachabilityRecall: 1,
           reachablePrecision: 0.5,
           alertReduction: null,
           fixSuccessRate: null,
           medianTimeMs: 12.4,
-          averageApiCostUsd: 0,
+          averageApiCostUsd: null,
         },
       }),
     );
     const report = await renderBenchmarkReport(directory);
     expect(report).toContain(
-      "| 2025-01-02 |    50 | 100.0% |     50.0% |             n/a |         n/a |       12 ms |       $0.0000 |",
+      "| 2025-01-02 |    50 |             21 |                10 | 100.0% |     50.0% |             n/a |         n/a |       12 ms |           n/a |",
     );
   });
 

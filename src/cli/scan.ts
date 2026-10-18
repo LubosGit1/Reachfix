@@ -58,17 +58,116 @@ export async function scanProject(
             "The vulnerable dependency is transitive; its callers inside node_modules have not yet been analyzed.",
         };
       } else {
-        reachability = importReachability;
+        reachability = {
+          ...importReachability,
+          verdict: "UNKNOWN",
+          reason:
+            "The dependency is imported, but no supported call to an imported symbol was found.",
+        };
       }
     }
     for (const advisory of finding.advisories) {
+      const advisoryReachability = matchAdvisorySymbols(reachability, advisory);
       result.push({
         dependency: finding.dependency,
         advisory,
-        reachability,
+        reachability: advisoryReachability,
       });
     }
   }
 
   return result;
+}
+
+function matchAdvisorySymbols(
+  reachability: ScanResult["reachability"],
+  advisory: AdvisoryFinding["advisories"][number],
+): ScanResult["reachability"] {
+  if (reachability.verdict !== "REACHABLE") {
+    return reachability;
+  }
+  const affectedSymbols = extractAdvisorySymbols(
+    `${advisory.summary}\n${advisory.details}`,
+  );
+  if (affectedSymbols.length === 0) {
+    return reachability;
+  }
+  const callEvidence = reachability.evidence.filter(({ statement }) =>
+    statement.includes("()"),
+  );
+  const matchedCalls = callEvidence.filter((evidence) =>
+    evidenceSymbols(evidence.statement).some((symbol) =>
+      affectedSymbols.includes(symbol),
+    ),
+  );
+  if (matchedCalls.length > 0) {
+    return {
+      ...reachability,
+      evidence: [
+        ...reachability.evidence.filter(
+          ({ statement }) => !statement.includes("()"),
+        ),
+        ...matchedCalls,
+      ],
+    };
+  }
+  return {
+    ...reachability,
+    verdict: "UNKNOWN",
+    reason:
+      "The advisory names affected functions, but none of those function calls were found in project source.",
+  };
+}
+
+function extractAdvisorySymbols(text: string): string[] {
+  const symbols = new Set<string>();
+  const excludedSymbols = new Set([
+    "constructor",
+    "function",
+    "imports",
+    "object",
+    "options",
+    "prototype",
+    "variable",
+  ]);
+  for (const match of text.matchAll(/`([^`]+)`/g)) {
+    const snippet = match[1]?.trim();
+    if (!snippet) {
+      continue;
+    }
+    const symbolMatch = snippet.match(
+      /(?:^|\.)([A-Za-z_$][\w$]*)(?:\s*\([^)]*\))?$/,
+    );
+    const symbol = symbolMatch?.[1]?.toLowerCase();
+    if (!symbol || excludedSymbols.has(symbol)) {
+      continue;
+    }
+    const before = text.slice(
+      Math.max(0, (match.index ?? 0) - 100),
+      match.index,
+    );
+    const after = text.slice(
+      (match.index ?? 0) + match[0].length,
+      (match.index ?? 0) + match[0].length + 100,
+    );
+    if (
+      snippet.includes(".") ||
+      snippet.includes("(") ||
+      /\b(?:function|functions|method|methods|called|invoked)\b/i.test(
+        `${before} ${after}`,
+      )
+    ) {
+      symbols.add(symbol);
+    }
+  }
+  return [...symbols];
+}
+
+function evidenceSymbols(statement: string): string[] {
+  const importedName = statement.match(/\bimports\s+([A-Za-z_$][\w$]*)$/)?.[1];
+  const memberName = statement.match(/\.([A-Za-z_$][\w$]*)\(\)$/)?.[1];
+  const directName = statement.match(/^([A-Za-z_$][\w$]*)\(\)$/)?.[1];
+  return [importedName, memberName, directName]
+    .filter((symbol): symbol is string => symbol !== undefined)
+    .map((symbol) => symbol.toLowerCase());
 }

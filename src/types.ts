@@ -94,7 +94,7 @@ export interface BenchmarkCaseResult {
   npmAuditVulnerabilityCount: number;
   reachfixFindingCount: number;
   elapsedMs: number;
-  apiCostUsd: number;
+  apiCostUsd: number | null;
   fixAttempted: boolean;
   fixVerified: boolean;
   reason: string;
@@ -115,7 +115,7 @@ export interface BenchmarkMetrics {
   verifiedFixCount: number;
   fixSuccessRate: number | null;
   medianTimeMs: number;
-  averageApiCostUsd: number;
+  averageApiCostUsd: number | null;
 }
 
 export interface BenchmarkRun {

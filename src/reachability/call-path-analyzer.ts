@@ -29,7 +29,7 @@ export class CallPathAnalyzer {
   ): Promise<ImportReachabilityResult> {
     const root = path.resolve(projectPath);
     const files = await this.collectSourceFiles(root);
-    const importedSymbols = new Map<string, string[]>();
+    const importedSymbols: ImportedSymbolEntry[] = [];
     const directEvidence: ImportEvidence[] = [];
 
     for (const filePath of files) {
@@ -40,10 +40,7 @@ export class CallPathAnalyzer {
       }
       for (const entry of imports) {
         directEvidence.push(entry.evidence);
-        importedSymbols.set(entry.name, [
-          ...(importedSymbols.get(entry.name) ?? []),
-          entry.evidence.statement,
-        ]);
+        importedSymbols.push(entry);
       }
     }
 
@@ -59,24 +56,37 @@ export class CallPathAnalyzer {
     const symbolUses: ImportEvidence[] = [];
     for (const filePath of files) {
       const source = await readFile(filePath, "utf8");
-      for (const symbol of [...importedSymbols.keys()]) {
-        const pattern = new RegExp(`\\b${escapeRegExp(symbol)}\\s*\\(`, "g");
-        if (pattern.test(source)) {
-          symbolUses.push({
-            filePath,
-            importType: "import",
-            statement: `call:${symbol}`,
-          });
+      for (const symbol of importedSymbols) {
+        if (symbol.namespace) {
+          const memberPattern = new RegExp(
+            `\\b${escapeRegExp(symbol.localName)}\\s*\\.\\s*([A-Za-z_$][\\w$]*)\\s*\\(`,
+            "g",
+          );
+          for (const match of source.matchAll(memberPattern)) {
+            const member = match[1];
+            if (member) {
+              symbolUses.push({
+                filePath,
+                line: lineAt(source, match.index ?? 0),
+                importType: "import",
+                statement: `${symbol.localName}.${member}()`,
+              });
+            }
+          }
         }
-        const namespacePattern = new RegExp(
-          `\\b${escapeRegExp(symbol)}\\s*\\.[A-Za-z_$][\\w$]*\\s*\\(`,
+        const pattern = new RegExp(
+          `\\b${escapeRegExp(symbol.localName)}\\s*\\(`,
           "g",
         );
-        if (namespacePattern.test(source)) {
+        for (const match of source.matchAll(pattern)) {
           symbolUses.push({
             filePath,
+            line: lineAt(source, match.index ?? 0),
             importType: "import",
-            statement: `namespace-call:${symbol}`,
+            statement:
+              symbol.importedName === symbol.localName
+                ? `${symbol.localName}()`
+                : `${symbol.localName}() imports ${symbol.importedName}`,
           });
         }
       }
@@ -94,7 +104,8 @@ export class CallPathAnalyzer {
     return {
       dependencyName,
       verdict: "NOT_REACHABLE",
-      reason: `The dependency is imported, but none of its symbols are not called during execution.`,
+      reason:
+        "The dependency is imported, but no supported calls to its imported symbols were found.",
       evidence: directEvidence,
     };
   }
@@ -122,7 +133,9 @@ export class CallPathAnalyzer {
 }
 
 interface ImportedSymbolEntry {
-  name: string;
+  localName: string;
+  importedName: string;
+  namespace: boolean;
   evidence: ImportEvidence;
 }
 
@@ -132,59 +145,99 @@ function extractImportedSymbols(
   dependencyName: string,
 ): ImportedSymbolEntry[] {
   const references: ImportedSymbolEntry[] = [];
-  const patterns = [
-    /import\s+\{([^}]+)\}\s+from\s+["']([^"']+)["']/g,
-    /import\s+([^\s]+)\s+from\s+["']([^"']+)["']/g,
-    /import\s+\*\s+as\s+([^\s]+)\s+from\s+["']([^"']+)["']/g,
-    /require\(\s*["']([^"']+)["']\s*\)/g,
-    /export\s+\{([^}]+)\}\s+from\s+["']([^"']+)["']/g,
-  ] as const;
-
-  for (const pattern of patterns) {
-    for (const match of source.matchAll(pattern)) {
-      const importedTarget = match[match.length - 1];
-      if (!importedTarget || importedTarget !== dependencyName) {
-        continue;
-      }
-      if (pattern.toString().includes("{")) {
-        const names = match[1]
-          ?.split(",")
-          .map((name) =>
-            name
-              .trim()
-              .split(/\s+as\s+/)
-              .at(-1)
-              ?.trim(),
-          )
-          .filter(Boolean) as string[];
-        for (const name of names) {
-          references.push({
-            name,
-            evidence: {
-              filePath,
-              importType: "import",
-              statement: match[0],
-            },
-          });
-        }
-        continue;
-      }
-      const importedName = match[1]?.trim();
-      if (!importedName) {
+  const namedImports = /\bimport\s*\{([^}]+)\}\s*from\s*["']([^"']+)["']/g;
+  for (const match of source.matchAll(namedImports)) {
+    if (match[2] !== dependencyName) {
+      continue;
+    }
+    for (const item of match[1]?.split(",") ?? []) {
+      const parts = item.trim().split(/\s+as\s+/);
+      const importedName = parts[0]?.trim();
+      const localName = parts.at(-1)?.trim();
+      if (!importedName || !localName || importedName === "type") {
         continue;
       }
       references.push({
-        name: importedName,
-        evidence: {
-          filePath,
-          importType: "require",
-          statement: match[0],
-        },
+        localName,
+        importedName,
+        namespace: false,
+        evidence: importEvidence(source, filePath, match),
       });
     }
   }
 
+  const namespaceImports = [
+    /\bimport\s+\*\s+as\s+([A-Za-z_$][\w$]*)\s+from\s*["']([^"']+)["']/g,
+    /\bimport\s+([A-Za-z_$][\w$]*)\s+from\s*["']([^"']+)["']/g,
+  ];
+  for (const pattern of namespaceImports) {
+    for (const match of source.matchAll(pattern)) {
+      if (match[2] !== dependencyName || !match[1]) {
+        continue;
+      }
+      references.push({
+        localName: match[1],
+        importedName: "default",
+        namespace: true,
+        evidence: importEvidence(source, filePath, match),
+      });
+    }
+  }
+
+  const destructuredRequires =
+    /\b(?:const|let|var)\s*\{([^}]+)\}\s*=\s*require\(\s*["']([^"']+)["']\s*\)/g;
+  for (const match of source.matchAll(destructuredRequires)) {
+    if (match[2] !== dependencyName) {
+      continue;
+    }
+    for (const item of match[1]?.split(",") ?? []) {
+      const parts = item.trim().split(/\s*:\s*/);
+      const importedName = parts[0]?.trim();
+      const localName = parts.at(-1)?.trim();
+      if (!importedName || !localName) {
+        continue;
+      }
+      references.push({
+        localName,
+        importedName,
+        namespace: false,
+        evidence: importEvidence(source, filePath, match),
+      });
+    }
+  }
+
+  const assignedRequires =
+    /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(\s*["']([^"']+)["']\s*\)/g;
+  for (const match of source.matchAll(assignedRequires)) {
+    if (match[2] !== dependencyName || !match[1]) {
+      continue;
+    }
+    references.push({
+      localName: match[1],
+      importedName: "default",
+      namespace: true,
+      evidence: importEvidence(source, filePath, match),
+    });
+  }
+
   return references;
+}
+
+function importEvidence(
+  source: string,
+  filePath: string,
+  match: RegExpMatchArray,
+): ImportEvidence {
+  return {
+    filePath,
+    line: lineAt(source, match.index ?? 0),
+    importType: match[0].startsWith("import") ? "import" : "require",
+    statement: match[0],
+  };
+}
+
+function lineAt(source: string, index: number): number {
+  return source.slice(0, index).split("\n").length;
 }
 
 function escapeRegExp(value: string): string {

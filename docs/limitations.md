@@ -19,8 +19,12 @@ behavior, fuzzing, and zero-day vulnerability discovery are out of scope.
 ## Reachability verdicts
 
 - **`REACHABLE`** means the source heuristics found a matching import or an
-  apparent call to an imported symbol. It does not prove that the code executes
-  in production or that the vulnerable code path is invoked.
+  apparent call to an imported symbol, such as a member call like
+  `lodash.merge()`. When advisory prose exposes a recognizable affected
+  function, Reachfix additionally checks for a call to that name. This
+  text-based matching does not prove that the code executes in production,
+  that vulnerable conditions hold, or that attacker-controlled input reaches
+  the code path.
 - **`NOT_REACHABLE`** means the current heuristics found no relevant use in the
   scanned application source. The result is limited by dynamic module loading,
   aliases, reflection, generated code, unsupported syntax, and the analysis
@@ -29,10 +33,12 @@ behavior, fuzzing, and zero-day vulnerability discovery are out of scope.
   loading, re-exports, and transitive paths that the analyzer cannot inspect
   must not be treated as `NOT_REACHABLE`.
 
-The scanner does not execute project code. Literal imports, re-exports, and
-symbol references are detected with source-text heuristics and can produce
-false positives or miss constructs outside those heuristics. Always inspect
-the finding and its evidence.
+The scanner does not execute project code. Literal imports, re-exports,
+symbol references, and function names in advisory prose are detected with
+source-text heuristics and can produce false positives or miss constructs
+outside those heuristics. Advisory text is not a structured affected-function
+catalog; when the analyzer cannot reliably identify an affected function, it
+retains package-level evidence. Always inspect the finding and its evidence.
 
 ## Fix and verification status
 
@@ -53,8 +59,9 @@ lifecycle scripts or network access during tests may not be verifiable.
 The fix command does not automate caller-code migrations, and does not try
 every affected advisory in one invocation. It refuses findings whose
 reachability is unknown/not proven or where OSV has no fixed semver version.
-The optional LLM repair service remains a lower-level component, not a second
-automatic CLI path. Pull request creation requires `gh` authentication and
+The optional LLM repair service is implemented as a lower-level component, but
+the `fix` command does not invoke it; caller-code migrations are not automated.
+Pull request creation requires `gh` authentication and
 appropriate repository permissions; it pushes a branch and cannot guarantee
 that branch protection or repository policy will permit the PR.
 
@@ -63,9 +70,13 @@ that branch protection or repository policy will permit the PR.
 Benchmark verdicts are manually labeled for a specific repository commit and
 advisory. The author must record a rationale and verify ground truth
 independently; reachfix output is not ground truth. The template is deliberately
-`UNKNOWN`. The checked-in dataset contains 50 package/advisory cases across
-two intentionally vulnerable training applications: 28 `REACHABLE`, 13
-`NOT_REACHABLE`, and 9 `UNKNOWN`. The cases meet the minimum size and reachable
+`UNKNOWN`. The checked-in dataset contains 53 package/advisory cases across two
+intentionally vulnerable training applications and three additional
+open-source projects: 28 `REACHABLE`, 13 `NOT_REACHABLE`, and 12 `UNKNOWN`.
+The added Axios, Mocha, and nyc cases cover transitive development
+dependencies and are labeled `UNKNOWN`; they improve repository diversity but
+do not make the sample representative of production applications. The cases
+meet the minimum size and reachable
 share, but the repository diversity is low and the results are not
 representative of general npm projects. The README report withholds metrics
 unless a run contains at least 50 manually reviewed cases and at least 30%
@@ -78,14 +89,16 @@ The generated table reports:
   `NOT_REACHABLE`. An `UNKNOWN` prediction is therefore preserved for recall.
 - **Precision:** correct `REACHABLE` predictions divided by all
   `REACHABLE` predictions. It is `n/a` if there are no such predictions.
-- **Alert reduction:** `1 - reachfix findings / npm audit vulnerability
-count`. It is `n/a` when npm audit reports zero vulnerabilities. This
-  comparison is a count comparison, not proof that both tools identify
-  equivalent advisories.
+- **Alert reduction:** `1 - reachfix reported packages / npm audit vulnerable
+packages`. Both counts use unique dependency package names for each pinned
+  repository commit; repeated advisory cases for the same commit contribute
+  counts only once. Reachfix `UNKNOWN` packages count as alerts because the
+  scanner reports them. It is `n/a` when npm audit reports zero vulnerable
+  packages. This compares package counts, not equivalent advisory identities.
 - **Median time:** median wall-clock duration of the benchmark case scans.
-- **Average API cost:** currently zero because the benchmark does not call an
-  LLM. Fix-success metrics are not representative until verified fix attempts
-  are wired into benchmark runs.
+- **Average API cost:** `n/a` because the benchmark does not measure API cost.
+  Fix-success metrics are not representative until verified fix attempts are
+  wired into benchmark runs.
 
 Small, biased, or incorrectly labeled datasets can produce misleading
 aggregates. Follow the README guidance for dataset size and reachable-case

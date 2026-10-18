@@ -390,5 +390,29 @@
     "advisoryId": "GHSA-7f5c-rpf4-86p8",
     "expectedVerdict": "UNKNOWN",
     "rationale": "The application registers hbs as a view engine, but the pinned source review did not establish whether the advisory's filesystem exposure preconditions are reached through the static template names and render options. Retain UNKNOWN pending evidence."
+  },
+  {
+    "id": "axios-transitive-braces-dos",
+    "repository": "https://github.com/axios/axios",
+    "commit": "326843a3902d73c9f6af9bad7b55e2412566a251",
+    "advisoryId": "GHSA-vfj7-8cjw-p6xm",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "At this pinned Axios commit, package-lock.json resolves the transitive dev dependency braces to 3.0.3, and npm audit identifies this advisory for that package. The source analysis does not inspect consumers in node_modules, so whether the vulnerable pattern processing is reachable remains UNKNOWN."
+  },
+  {
+    "id": "mocha-transitive-babel-core-file-read",
+    "repository": "https://github.com/mochajs/mocha",
+    "commit": "cb21a4eba550da665fb2c3fa1ce021777a191e23",
+    "advisoryId": "GHSA-4x5r-pxfx-6jf8",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "At this pinned Mocha commit, package-lock.json resolves the transitive dev dependency @babel/core to 7.28.5, and npm audit identifies this advisory for that package. The source analysis does not inspect consumers in node_modules, so whether vulnerable source-map comment handling is reachable remains UNKNOWN."
+  },
+  {
+    "id": "nyc-transitive-uuid-buffer-bounds",
+    "repository": "https://github.com/istanbuljs/nyc",
+    "commit": "908620475199fa7b9ea0ea8b21d6d8ad6921e3ae",
+    "advisoryId": "GHSA-w5hq-g745-h8pq",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "At this pinned nyc commit, package-lock.json resolves vulnerable transitive uuid releases, including 3.4.0, and npm audit identifies this advisory for uuid. The source analysis does not inspect consumers in node_modules, so use of the affected buffer-writing API remains UNKNOWN."
   }
 ]

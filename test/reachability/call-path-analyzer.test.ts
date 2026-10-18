@@ -25,7 +25,7 @@ describe("call path analyzer", () => {
     );
 
     expect(result.verdict).toBe("NOT_REACHABLE");
-    expect(result.reason).toContain("not called");
+    expect(result.reason).toContain("no supported calls");
   });
 
   it("supports namespace imports and member calls", async () => {
@@ -36,9 +36,24 @@ describe("call path analyzer", () => {
 
     expect(result.verdict).toBe("REACHABLE");
     expect(
-      result.evidence.some((entry) =>
-        entry.statement.includes("namespace-call"),
-      ),
+      result.evidence.some((entry) => entry.statement === "vulnerable.run()"),
     ).toBe(true);
+  });
+
+  it.each([
+    ["named-sym", "mergeValues() imports merge"],
+    ["destructured-sym", "mergeValues() imports merge"],
+    ["default-import-sym", "vulnerable.merge()"],
+    ["commonjs-alias-sym", "lodash.merge()"],
+  ])("reports the called symbol and line for %s", async (fixture, symbol) => {
+    const result = await new CallPathAnalyzer().analyze(
+      path.join(fixturesPath, fixture),
+      "vulnerable",
+    );
+
+    expect(result.verdict).toBe("REACHABLE");
+    expect(result.evidence).toContainEqual(
+      expect.objectContaining({ line: 3, statement: symbol }),
+    );
   });
 });

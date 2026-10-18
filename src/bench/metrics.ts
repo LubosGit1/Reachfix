@@ -19,17 +19,20 @@ export function calculateBenchmarkMetrics(
   const correctReachablePredictions = reachablePredictions.filter(
     ({ expectedVerdict }) => expectedVerdict === "REACHABLE",
   ).length;
+  const projects = uniqueProjectResults(results);
   const auditCount = sum(
-    results.map((result) => result.npmAuditVulnerabilityCount),
+    projects.map((result) => result.npmAuditVulnerabilityCount),
   );
   const reachfixCount = sum(
-    results.map((result) => result.reachfixFindingCount),
+    projects.map((result) => result.reachfixFindingCount),
   );
   const fixAttempts = results.filter(({ fixAttempted }) => fixAttempted);
   const verifiedFixes = fixAttempts.filter(
     ({ fixVerified }) => fixVerified,
   ).length;
-  const totalApiCost = sum(results.map(({ apiCostUsd }) => apiCostUsd));
+  const measuredApiCosts = results.flatMap(({ apiCostUsd }) =>
+    apiCostUsd === null ? [] : [apiCostUsd],
+  );
 
   return {
     caseCount: results.length,
@@ -50,8 +53,33 @@ export function calculateBenchmarkMetrics(
     verifiedFixCount: verifiedFixes,
     fixSuccessRate: ratio(verifiedFixes, fixAttempts.length),
     medianTimeMs: median(results.map(({ elapsedMs }) => elapsedMs)),
-    averageApiCostUsd: results.length > 0 ? totalApiCost / results.length : 0,
+    averageApiCostUsd:
+      measuredApiCosts.length > 0
+        ? sum(measuredApiCosts) / measuredApiCosts.length
+        : null,
   };
+}
+
+function uniqueProjectResults(
+  results: BenchmarkCaseResult[],
+): BenchmarkCaseResult[] {
+  const projects = new Map<string, BenchmarkCaseResult>();
+  for (const result of results) {
+    const key = `${result.repository}@${result.commit}`;
+    const existing = projects.get(key);
+    if (
+      existing &&
+      (existing.npmAuditVulnerabilityCount !==
+        result.npmAuditVulnerabilityCount ||
+        existing.reachfixFindingCount !== result.reachfixFindingCount)
+    ) {
+      throw new Error(
+        `Benchmark counts differ for repeated project ${result.repository}@${result.commit}.`,
+      );
+    }
+    projects.set(key, result);
+  }
+  return [...projects.values()];
 }
 
 export function conservativeVerdict(

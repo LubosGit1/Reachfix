@@ -1,4 +1,5 @@
 import type { ScanResult } from "../types.js";
+import { formatEvidenceLocation, selectPrimaryEvidence } from "./evidence.js";
 
 export function renderMarkdownReport(results: ScanResult[]): string {
   const reachable = results.filter(
@@ -17,8 +18,11 @@ export function renderMarkdownReport(results: ScanResult[]): string {
   ];
 
   for (const { dependency, advisory, reachability } of results) {
-    const evidence = reachability.evidence[0]
-      ? `\`${escapeMarkdown(reachability.evidence[0].filePath)}\` — ${escapeMarkdown(reachability.reason)}`
+    const location = formatEvidenceLocation(
+      selectPrimaryEvidence(reachability.evidence),
+    );
+    const evidence = location
+      ? `\`${escapeMarkdown(location)}\` — ${escapeMarkdown(reachability.reason)}`
       : escapeMarkdown(reachability.reason);
     const advisoryLabel = advisory.summary
       ? `${escapeMarkdown(advisory.id)}: ${escapeMarkdown(advisory.summary)}`

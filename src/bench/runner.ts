@@ -228,11 +228,15 @@ async function executeCase(
       expectedVerdict: benchmarkCase.expectedVerdict,
       actualVerdict,
       npmAuditVulnerabilityCount: audit.vulnerabilityCount,
-      reachfixFindingCount: scanResults.filter(
-        ({ reachability }) => reachability.verdict !== "NOT_REACHABLE",
-      ).length,
+      reachfixFindingCount: new Set(
+        scanResults
+          .filter(
+            ({ reachability }) => reachability.verdict !== "NOT_REACHABLE",
+          )
+          .map(({ dependency }) => dependency.name),
+      ).size,
       elapsedMs: performance.now() - started,
-      apiCostUsd: 0,
+      apiCostUsd: null,
       fixAttempted: false,
       fixVerified: false,
       reason:

@@ -1,4 +1,5 @@
 import type { ScanResult } from "../types.js";
+import { formatEvidenceLocation, selectPrimaryEvidence } from "./evidence.js";
 
 export function renderTerminalReport(results: ScanResult[]): string {
   if (results.length === 0) {
@@ -9,7 +10,9 @@ export function renderTerminalReport(results: ScanResult[]): string {
     package: `${dependency.name}@${dependency.version}`,
     advisory: advisory.id,
     verdict: reachability.verdict,
-    path: reachability.evidence[0]?.filePath ?? "-",
+    path:
+      formatEvidenceLocation(selectPrimaryEvidence(reachability.evidence)) ??
+      "-",
   }));
   const widths = {
     package: Math.max(

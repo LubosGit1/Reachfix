@@ -73,6 +73,57 @@ describe("scan pipeline", () => {
     );
   });
 
+  it("matches observed calls to functions named in advisory details", async () => {
+    const advisories: Advisory[] = [
+      {
+        ...advisory,
+        id: "GHSA-omit-fixture",
+        details: "The affected function is `_.omit`.",
+      },
+      {
+        ...advisory,
+        id: "GHSA-trim-fixture",
+        details: "The affected `trim` function can be abused.",
+      },
+    ];
+    const results = await scanProject("/fixture", {
+      lockfileParser: { parse: vi.fn().mockResolvedValue(inventory) },
+      advisoryClient: {
+        findVulnerabilities: vi
+          .fn()
+          .mockResolvedValue([{ dependency: dependency(true), advisories }]),
+      },
+      reachabilityAnalyzer: {
+        analyze: vi.fn().mockResolvedValue({
+          dependencyName: "vulnerable",
+          verdict: "REACHABLE",
+          reason: "The imported vulnerable symbol is invoked.",
+          evidence: [
+            {
+              filePath: "/fixture/src/index.js",
+              importType: "require",
+              statement: 'const lodash = require("vulnerable");',
+            },
+            {
+              filePath: "/fixture/src/index.js",
+              line: 2,
+              importType: "import",
+              statement: "lodash.omit()",
+            },
+          ],
+        }),
+      },
+    });
+
+    expect(results.map(({ reachability }) => reachability.verdict)).toEqual([
+      "REACHABLE",
+      "UNKNOWN",
+    ]);
+    expect(results[1]?.reachability.reason).toContain(
+      "none of those function calls",
+    );
+  });
+
   it("promotes unanalyzed transitive call paths to UNKNOWN, never NOT_REACHABLE", async () => {
     const results = await scanProject("/fixture", {
       lockfileParser: { parse: vi.fn().mockResolvedValue(inventory) },
@@ -138,7 +189,7 @@ describe("scan pipeline", () => {
     expect(results[0]?.reachability.verdict).toBe("UNKNOWN");
   });
 
-  it("uses positive import evidence when call-path analysis misses an alias", async () => {
+  it("preserves uncertainty when an import is found but no symbol call is traced", async () => {
     const results = await scanProject("/fixture", {
       lockfileParser: { parse: vi.fn().mockResolvedValue(inventory) },
       advisoryClient: {
@@ -171,8 +222,9 @@ describe("scan pipeline", () => {
     });
 
     expect(results[0]?.reachability).toMatchObject({
-      verdict: "REACHABLE",
-      reason: "A literal import was found.",
+      verdict: "UNKNOWN",
+      reason:
+        "The dependency is imported, but no supported call to an imported symbol was found.",
     });
   });
 

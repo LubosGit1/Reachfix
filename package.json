@@ -3,6 +3,19 @@
   "version": "0.1.0",
   "description": "Reachability-aware vulnerability remediation for npm projects",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LubosGit1/Reachfix.git"
+  },
+  "homepage": "https://github.com/LubosGit1/Reachfix#readme",
+  "bugs": {
+    "url": "https://github.com/LubosGit1/Reachfix/issues"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "type": "module",
   "bin": {
     "reachfix": "./dist/cli/index.js"
@@ -20,6 +33,7 @@
     "bench": "pnpm build && node dist/cli/index.js bench",
     "bench:report": "pnpm build && node dist/bench/report-cli.js",
     "bench:case": "pnpm build && node dist/bench/template-cli.js",
+    "prepack": "pnpm build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {

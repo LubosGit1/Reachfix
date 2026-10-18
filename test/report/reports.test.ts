@@ -31,8 +31,15 @@ const reachableResult: ScanResult = {
     evidence: [
       {
         filePath: "/project/src/index.ts",
+        line: 1,
         importType: "import",
         statement: 'import { parse } from "vulnerable";',
+      },
+      {
+        filePath: "/project/src/index.ts",
+        line: 2,
+        importType: "import",
+        statement: "parse()",
       },
     ],
   },
@@ -57,6 +64,9 @@ describe("report renderers", () => {
   it("renders terminal output and an empty result message", () => {
     expect(renderTerminalReport([reachableResult])).toContain("REACHABLE");
     expect(renderTerminalReport([reachableResult])).toContain("GHSA-test-1234");
+    expect(renderTerminalReport([reachableResult])).toContain(
+      "/project/src/index.ts:2 (parse())",
+    );
     expect(renderTerminalReport([])).toBe(
       "No vulnerable dependencies found.\n",
     );
@@ -68,6 +78,7 @@ describe("report renderers", () => {
     expect(markdown).toContain("`vulnerable@2.0.0`");
     expect(markdown).toContain("Unsafe \\| parser");
     expect(markdown).toContain("**REACHABLE**");
+    expect(markdown).toContain("src/index.ts:2 (parse())");
   });
 
   it("creates SARIF 2.1.0 with rules, severity, and relative source locations", () => {
@@ -82,6 +93,7 @@ describe("report renderers", () => {
         {
           physicalLocation: {
             artifactLocation: { uri: "src/index.ts" },
+            region: { startLine: 2 },
           },
         },
       ],

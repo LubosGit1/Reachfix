@@ -11,18 +11,22 @@ const ReportRunSchema = z.object({
   metrics: z.object({
     caseCount: z.number().int().nonnegative(),
     reachableGroundTruthCount: z.number().int().nonnegative(),
+    npmAuditVulnerabilityCount: z.number().int().nonnegative(),
+    reachfixReportedCount: z.number().int().nonnegative(),
     reachabilityRecall: z.number().nullable(),
     reachablePrecision: z.number().nullable(),
     alertReduction: z.number().nullable(),
     fixSuccessRate: z.number().nullable(),
     medianTimeMs: z.number().nonnegative(),
-    averageApiCostUsd: z.number().nonnegative(),
+    averageApiCostUsd: z.number().nonnegative().nullable(),
   }),
 });
 
 const REPORT_HEADERS = [
   "Date",
   "Cases",
+  "Audit packages",
+  "Reachfix packages",
   "Recall",
   "Precision",
   "Alert reduction",
@@ -51,7 +55,9 @@ interface ReportRun {
     alertReduction: number | null;
     fixSuccessRate: number | null;
     medianTimeMs: number;
-    averageApiCostUsd: number;
+    npmAuditVulnerabilityCount: number;
+    reachfixReportedCount: number;
+    averageApiCostUsd: number | null;
   };
 }
 
@@ -115,12 +121,14 @@ export async function renderBenchmarkReport(
   const rows = runs.map(({ completedAt, metrics }) => [
     completedAt.slice(0, 10),
     String(metrics.caseCount),
+    String(metrics.npmAuditVulnerabilityCount),
+    String(metrics.reachfixReportedCount),
     formatPercent(metrics.reachabilityRecall),
     formatPercent(metrics.reachablePrecision),
     formatPercent(metrics.alertReduction),
     formatPercent(metrics.fixSuccessRate),
     `${Math.round(metrics.medianTimeMs)} ms`,
-    `$${metrics.averageApiCostUsd.toFixed(4)}`,
+    formatCurrency(metrics.averageApiCostUsd),
   ]);
   return [
     "",
@@ -173,6 +181,10 @@ export async function updateReadmeBenchmarkSection(
 
 function formatPercent(value: number | null): string {
   return value === null ? "n/a" : `${(value * 100).toFixed(1)}%`;
+}
+
+function formatCurrency(value: number | null): string {
+  return value === null ? "n/a" : `$${value.toFixed(4)}`;
 }
 
 function renderTable(rows: string[][]): string[] {
