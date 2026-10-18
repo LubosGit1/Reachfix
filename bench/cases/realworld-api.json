@@ -1,0 +1,98 @@
+[
+  {
+    "id": "realworld-body-parser-urlencoded-dos",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-qwcr-r2fm-qrc7",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "The pinned package-lock.json resolves body-parser 1.20.2, an affected version. src/main.ts enables bodyParser.urlencoded({ extended: true }) for application requests (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/src/main.ts#L14-L15), which is the URL-encoded parsing feature named by the advisory (https://osv.dev/vulnerability/GHSA-qwcr-r2fm-qrc7)."
+  },
+  {
+    "id": "realworld-body-parser-invalid-limit",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-v422-hmwv-36x6",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves body-parser 1.20.2, an affected version, but src/main.ts configures only bodyParser.json() and bodyParser.urlencoded({ extended: true }) and does not pass a limit option (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/src/main.ts#L14-L15). The advisory requires an invalid limit value to be supplied (https://osv.dev/vulnerability/GHSA-v422-hmwv-36x6)."
+  },
+  {
+    "id": "realworld-axios-streamed-upload",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-5c9x-8gcm-mpgx",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. The only axios request is axios.get('/') in the Node E2E test; it has no streamed request body and does not set maxRedirects to 0 (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8). The advisory requires a streamed upload on the native HTTP transport path (https://osv.dev/vulnerability/GHSA-5c9x-8gcm-mpgx)."
+  },
+  {
+    "id": "realworld-axios-streamed-response",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-vf2m-468p-8v99",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. The only axios request is axios.get('/') and it does not specify responseType: 'stream' (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8). The advisory requires streamed response handling (https://osv.dev/vulnerability/GHSA-vf2m-468p-8v99)."
+  },
+  {
+    "id": "realworld-axios-form-data-to-json",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-42h9-826w-cgv3",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. The application only calls axios.get('/') and does not call formToJSON or pass FormData for JSON conversion (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8). The advisory affects deeply nested FormData field names passed through that conversion (https://osv.dev/vulnerability/GHSA-42h9-826w-cgv3)."
+  },
+  {
+    "id": "realworld-axios-to-form-data-recursion",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-62hf-57xw-28j9",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. The only axios call is axios.get('/') with neither request data nor params supplied (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8). The advisory requires deeply nested data to reach the recursive toFormData serializer (https://osv.dev/vulnerability/GHSA-62hf-57xw-28j9)."
+  },
+  {
+    "id": "realworld-axios-multipart-form-data",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-445q-vr5w-6q77",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. The only axios call is a GET request without FormData or Blob/File-like values (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8). The advisory requires a multipart FormData value whose type is attacker-controlled (https://osv.dev/vulnerability/GHSA-445q-vr5w-6q77)."
+  },
+  {
+    "id": "realworld-axios-deep-form-to-json",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-pmv8-rq9r-6j72",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. The application does not call axios.formToJSON or pass attacker-controlled FormData; its only request is axios.get('/') (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8). Those missing inputs are required for the advisory's recursive FormData conversion path (https://osv.dev/vulnerability/GHSA-pmv8-rq9r-6j72)."
+  },
+  {
+    "id": "realworld-axios-url-search-params",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-xhjh-pmcv-23jw",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. The only axios call is axios.get('/') without params or an AxiosURLSearchParams instance (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8). The advisory is in AxiosURLSearchParams encoding and requires that serialization path (https://osv.dev/vulnerability/GHSA-xhjh-pmcv-23jw)."
+  },
+  {
+    "id": "realworld-axios-browser-cookie-regex",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-hfxv-24rg-xrqf",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. Axios is imported only by Node E2E tests (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8). The advisory explicitly does not affect ordinary Node.js HTTP adapter usage and requires a browser caller-controlled XSRF cookie name (https://osv.dev/vulnerability/GHSA-hfxv-24rg-xrqf)."
+  },
+  {
+    "id": "realworld-axios-absolute-url-ssrf",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-jr5f-v2jv-69x6",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. The E2E request uses the fixed relative path '/' and its baseURL is configured as a host and port for the local test server; no caller-controlled absolute URL is passed to Axios (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8; https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/support/test-setup.ts#L4-L9). The advisory requires an absolute request URL to override baseURL (https://osv.dev/vulnerability/GHSA-jr5f-v2jv-69x6)."
+  },
+  {
+    "id": "realworld-axios-explicit-get-method",
+    "repository": "https://github.com/gothinkster/node-express-realworld-example-app",
+    "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+    "advisoryId": "GHSA-9fr6-4gfg-395g",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The pinned package-lock.json resolves affected axios 1.6.2. Project code calls axios.get('/'), which selects the GET method rather than calling axios.request with a config that omits its method (https://github.com/gothinkster/node-express-realworld-example-app/blob/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b/e2e/src/server/server.spec.ts#L1-L8). The advisory's method-override gadget requires a request object with no explicit method and a polluted Object.prototype.method (https://osv.dev/vulnerability/GHSA-9fr6-4gfg-395g); neither condition is established by this call."
+  }
+]

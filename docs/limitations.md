@@ -70,25 +70,29 @@ that branch protection or repository policy will permit the PR.
 Benchmark verdicts are manually labeled for a specific repository commit and
 advisory. The author must record a rationale and verify ground truth
 independently; reachfix output is not ground truth. The template is deliberately
-`UNKNOWN`. The checked-in dataset contains 53 package/advisory cases across two
-intentionally vulnerable training applications and three additional
-open-source projects: 28 `REACHABLE`, 13 `NOT_REACHABLE`, and 12 `UNKNOWN`.
-The added Axios, Mocha, and nyc cases cover transitive development
-dependencies and are labeled `UNKNOWN`; they improve repository diversity but
-do not make the sample representative of production applications. The cases
-meet the minimum size and reachable
-share, but the repository diversity is low and the results are not
-representative of general npm projects. The README report withholds metrics
-unless a run contains at least 50 manually reviewed cases and at least 30%
-ground-truth `REACHABLE` cases; meeting that threshold does not make a biased
-sample representative.
+`UNKNOWN`. The checked-in dataset contains 65 package/advisory cases across two
+intentionally vulnerable training applications and four additional
+open-source projects: 29 `REACHABLE`, 24 `NOT_REACHABLE`, and 12 `UNKNOWN`.
+Twelve cases pin the RealWorld API application and record advisory-specific
+source and version evidence. The Axios, Mocha, and nyc cases cover transitive
+development dependencies and remain `UNKNOWN`; repository diversity is still
+low, so the results are not representative of general npm projects. The README
+report withholds metrics unless a run contains at least 50 manually reviewed
+cases and at least 30% ground-truth `REACHABLE` cases; meeting that threshold
+does not make a biased sample representative.
+The 2026-10-18 run has eight false `REACHABLE` predictions and 66.7% precision;
+four of the new RealWorld axios cases are false positives where package-level
+call evidence is reported despite the advisory-specific request option being
+absent.
 
 The generated table reports:
 
 - **Recall:** for ground-truth `REACHABLE` cases, the fraction not classified
   `NOT_REACHABLE`. An `UNKNOWN` prediction is therefore preserved for recall.
 - **Precision:** correct `REACHABLE` predictions divided by all
-  `REACHABLE` predictions. It is `n/a` if there are no such predictions.
+  `REACHABLE` predictions. Ground-truth `UNKNOWN` cases are excluded from both
+  recall and precision. Precision is `n/a` if there are no `REACHABLE`
+  predictions.
 - **Alert reduction:** `1 - reachfix reported packages / npm audit vulnerable
 packages`. Both counts use unique dependency package names for each pinned
   repository commit; repeated advisory cases for the same commit contribute
