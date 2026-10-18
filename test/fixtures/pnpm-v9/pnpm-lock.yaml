@@ -1,0 +1,22 @@
+lockfileVersion: '9.0'
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+importers:
+  .:
+    dependencies:
+      alpha:
+        specifier: ^1.0.0
+        version: 1.2.0
+packages:
+  alpha@1.2.0:
+    resolution:
+      integrity: sha512-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+  vulnerable@2.0.0:
+    resolution:
+      integrity: sha512-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB==
+snapshots:
+  alpha@1.2.0:
+    dependencies:
+      vulnerable: 2.0.0
+  vulnerable@2.0.0: {}

@@ -1,0 +1,10 @@
+{
+  "name": "reachfix-fixture-npm-v2",
+  "version": "1.0.0",
+  "dependencies": {
+    "alpha": "^1.0.0"
+  },
+  "devDependencies": {
+    "dev-only": "^3.0.0"
+  }
+}

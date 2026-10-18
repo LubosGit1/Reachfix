@@ -1,0 +1,7 @@
+{
+  "name": "reachfix-fixture-pnpm-v9",
+  "version": "1.0.0",
+  "dependencies": {
+    "alpha": "^1.0.0"
+  }
+}

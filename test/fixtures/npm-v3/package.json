@@ -1,0 +1,7 @@
+{
+  "name": "reachfix-fixture-npm-v3",
+  "version": "1.0.0",
+  "dependencies": {
+    "vulnerable": "^2.0.0"
+  }
+}
