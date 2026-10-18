@@ -30,6 +30,30 @@ node dist/cli/index.js bench <dataset>
 
 `scan --format` accepts `text`, `json`, `sarif`, or `markdown`. `--fail-on` accepts `reachable` (default), `unknown`, `any`, or `never`. Exit codes are `0` when the threshold is not met, `1` when it is met, and `2` for a tool error. `fix` considers reachable findings only, selects a fixed version reported by OSV, updates a temporary copy, and applies only package manifest/lockfile changes after Docker verification against a clean baseline. `fix --pr` also creates a branch, commits those files, pushes it, and opens a pull request with GitHub CLI; it requires a clean Git worktree, `gh` authentication, and `contents: write`/`pull-requests: write` permissions.
 
+### Try a vulnerability scan
+
+From the repository root, build Reachfix and create a disposable project that
+imports an outdated lodash release with known OSV advisories:
+
+```sh
+REACHFIX_ROOT="$(pwd)"
+pnpm build
+DEMO_DIR="$(mktemp -d)"
+cd "$DEMO_DIR"
+npm init -y
+npm install --package-lock-only --ignore-scripts --no-audit --no-fund lodash@4.17.20
+printf 'const lodash = require("lodash");\nconsole.log(typeof lodash);\n' > index.js
+node "$REACHFIX_ROOT/dist/cli/index.js" scan "$DEMO_DIR" --fail-on never
+```
+
+The scan needs network access to query OSV.dev. It should report known lodash
+advisories and point to `index.js` as evidence. `REACHABLE` means the project
+imports the dependency; it does not prove that the application calls a
+particular vulnerable function. The scan does not execute the project code.
+`--fail-on never` keeps findings from setting the command's failure exit code.
+The disposable project is created under the system temporary directory and can
+be removed when you are done.
+
 ### GitHub Action
 
 Use the example workflow at [examples/reachfix.yml](./examples/reachfix.yml). Grant `security-events: write` to upload SARIF. The action scans by default and uploads a SARIF 2.1.0 report. The example keeps `fix: false`; opt in with `fix: true` to open a PR only after a reachable dependency upgrade passes Docker verification. This additionally requires `contents: write` and `pull-requests: write` workflow permissions and GitHub CLI authentication. The scan threshold is still evaluated after PR creation and may fail the workflow until the fix is merged and rescanned.
