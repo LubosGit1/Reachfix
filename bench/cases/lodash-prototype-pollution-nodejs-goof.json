@@ -2,7 +2,7 @@
   "id": "lodash-prototype-pollution-nodejs-goof",
   "repository": "https://github.com/Snyk-learn/nodejs-goof",
   "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
-  "advisoryId": "GHSA-jf85-cpcp-j695",
+  "advisoryId": "GHSA-fvqr-27wr-82fm",
   "expectedVerdict": "REACHABLE",
-  "rationale": "At this pinned commit package-lock.json resolves lodash 4.17.4, affected by GHSA-jf85-cpcp-j695 (fixed in 4.17.12; https://osv.dev/vulnerability/GHSA-jf85-cpcp-j695). The source imports lodash and calls _.merge(message, req.body.message, ...) in routes/index.js (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L347-L351); app.js registers that handler for PUT /chat (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L66-L68). This is a direct call to the affected merge API with request-body data."
+  "rationale": "At this pinned commit package-lock.json resolves lodash 4.17.4, affected by GHSA-fvqr-27wr-82fm (fixed in 4.17.5; https://osv.dev/vulnerability/GHSA-fvqr-27wr-82fm). The advisory names merge as an affected function. routes/index.js calls _.merge(message, req.body.message, ...) with request-body data (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351), and app.js registers it for PUT /chat (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L66-L68)."
 }

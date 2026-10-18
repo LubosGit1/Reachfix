@@ -2,7 +2,7 @@
 
 reachfix is an open-source TypeScript CLI and GitHub Action planned to identify vulnerable npm dependencies, analyze whether vulnerable code is reachable, and verify defensive fixes.
 
-> **Project status:** milestones M0–M9 are implemented. `scan` inventories dependencies, queries OSV, and reports import/symbol reachability. Terminal, JSON, SARIF 2.1.0, and Markdown formats are available. The GitHub Action scans and uploads SARIF. `fix` stages a reachable dependency upgrade, verifies it against a clean baseline in Docker, and applies only the verified manifest and lockfile changes; optional PR creation uses GitHub CLI. The benchmark runner is implemented, but the dataset still needs manually reviewed ground-truth cases before publishing metrics.
+> **Project status:** milestones M0–M9 are implemented. `scan` inventories dependencies, queries OSV, and reports import/symbol reachability. Terminal, JSON, SARIF 2.1.0, and Markdown formats are available. The GitHub Action scans and uploads SARIF. `fix` stages a reachable dependency upgrade, verifies it against a clean baseline in Docker, and applies only the verified manifest and lockfile changes; optional PR creation uses GitHub CLI. The benchmark has 50 manually annotated cases, currently concentrated in two intentionally vulnerable training applications.
 
 Documentation: [architecture](./docs/architecture.md), [limitations and result interpretation](./docs/limitations.md), [AI-assisted development and release process](./docs/ai-development-and-release.md), and the full [project specification](./SPEC.md).
 
@@ -51,9 +51,9 @@ Fixes are limited to a single direct or transitive dependency per invocation. Co
 
 ### Benchmark (M7)
 
-Benchmark ground truth is intentionally manual. Create a case template with `pnpm bench:case -- <case-id>`, then edit `bench/cases/<case-id>.json` with a public repository URL, immutable 40-character commit SHA, advisory ID, expected verdict, and evidence-based rationale. Review every verdict yourself; do not treat analyzer output as ground truth. Metrics are withheld from the README until an individual run has at least 50 cases and at least 30% ground-truth `REACHABLE` cases.
+Benchmark ground truth is intentionally manual. Create a case template with `pnpm bench:case -- <case-id>`, then edit `bench/cases/<case-id>.json` with a public repository URL, immutable 40-character commit SHA, advisory ID, expected verdict, and evidence-based rationale. The loader also accepts JSON arrays for curated bundles. Review every verdict independently; do not treat analyzer output as ground truth. Metrics are withheld from the README until an individual run has at least 50 cases and at least 30% ground-truth `REACHABLE` cases.
 
-The checked-in dataset currently has one evidence-backed seed case, [lodash-prototype-pollution-nodejs-goof](./bench/cases/lodash-prototype-pollution-nodejs-goof.json). It is not representative; expand and review the dataset before publishing metrics.
+The checked-in dataset contains 50 package/advisory cases: 28 `REACHABLE`, 13 `NOT_REACHABLE`, and 9 `UNKNOWN`. Cases pin commits in [Snyk-learn/nodejs-goof](https://github.com/Snyk-learn/nodejs-goof) and [OWASP/NodeGoat](https://github.com/OWASP/NodeGoat); these intentionally vulnerable training apps are not a representative sample of general npm projects. See the evidence in [curated-cases.json](./bench/cases/curated-cases.json) and [lodash-prototype-pollution-nodejs-goof.json](./bench/cases/lodash-prototype-pollution-nodejs-goof.json).
 
 Run cases using `pnpm bench bench/cases`. Each case is checked out at its pinned commit without running repository scripts. reachfix scans it statically; `npm audit --json --package-lock-only --ignore-scripts` provides the comparison count. Results are written to `bench/results/<UTC-date>.json`. A date can be written only once, so copy or rename a prior result before rerunning on the same day. Run `pnpm bench:report` to regenerate the table below. Missing advisory results remain `UNKNOWN`, not `NOT_REACHABLE`. Fix success and API cost are not yet benchmarked; fix attempts are not part of M7.
 
@@ -61,10 +61,11 @@ Run cases using `pnpm bench bench/cases`. Each case is checked out at its pinned
 
 ## Benchmark results
 
-> Metrics are withheld until a manually reviewed run contains at least 50 cases and 30% ground-truth REACHABLE cases.
+> Only manually reviewed runs with at least 50 cases and 30% ground-truth REACHABLE cases are shown.
 
-| Date | Cases | Recall | Precision | Alert reduction | Fix success | Median time | Avg. API cost |
-| ---- | ----: | -----: | --------: | --------------: | ----------: | ----------: | ------------: |
+| Date       | Cases | Recall | Precision | Alert reduction | Fix success | Median time | Avg. API cost |
+| ---------- | ----: | -----: | --------: | --------------: | ----------: | ----------: | ------------: |
+| 2026-10-18 |    50 | 100.0% |     62.2% |         -181.4% |         n/a |     3431 ms |       $0.0000 |
 
 <!-- reachfix-benchmark:end -->
 

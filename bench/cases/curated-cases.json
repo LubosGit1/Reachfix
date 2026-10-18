@@ -1,0 +1,394 @@
+[
+  {
+    "id": "goof-admzip-arbitrary-file-write",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-3v6h-hqm4-2rg6",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins adm-zip 0.4.7, affected by this advisory. The /import route accepts uploaded data, constructs AdmZip from it, and invokes extractAllTo (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L241-L257); app.js registers the upload middleware and route (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L47-L64). The affected archive extraction API is called on uploaded content."
+  },
+  {
+    "id": "goof-admzip-uncontrolled-allocation",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-7q85-xj36-vmfc",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins adm-zip 0.4.7, affected by this advisory. The /import route passes an uploaded archive to AdmZip and extractAllTo (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L241-L257). Extraction reads each archive entry through the synchronous data path whose output allocation is affected."
+  },
+  {
+    "id": "goof-body-parser-urlencoded",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-qwcr-r2fm-qrc7",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins body-parser 1.9.0. app.js enables bodyParser.urlencoded({ extended: false }) for application requests (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L47-L49), matching the URL-encoded parsing feature identified by this advisory."
+  },
+  {
+    "id": "goof-express-redirect-xss",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-qw6h-vgh9-j6wx",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins Express 4.12.4. The login handler takes redirectPage from req.body and passes it to res.redirect (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L37-L64); app.js registers the handler (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L53-L55). The advisory specifically affects untrusted values passed to response.redirect()."
+  },
+  {
+    "id": "goof-express-malformed-redirect",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-rv95-896h-c2vc",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins Express 4.12.4. The login handler forwards the request-body redirectPage value to res.redirect (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L37-L64), invoking the redirect behavior affected by this advisory."
+  },
+  {
+    "id": "goof-lodash-merge-prototype-pollution",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-4xc9-xhrj-v574",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins lodash 4.17.4, affected by this advisory, whose affected functions include merge. routes/index.js passes req.body.message to _.merge (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351); app.js registers this handler for PUT /chat (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L66-L68)."
+  },
+  {
+    "id": "goof-marked-regex-ref-link",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-5v2h-r2cx-5xgj",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. User-supplied todo content is stored by the create route and rendered through marked in the index view (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L152-L170; https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/views/index.ejs#L18-L21). This exercises the parser path affected by the advisory."
+  },
+  {
+    "id": "goof-marked-data-uri-xss",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-7px7-7xjx-hxm8",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. User-supplied todo content is rendered by marked in the index view after being stored by the create route (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L152-L170; https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/views/index.ejs#L18-L21). The advisory concerns Marked's data-URI parsing path."
+  },
+  {
+    "id": "goof-marked-regex-links",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-p9wx-2529-fp83",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. The application stores user-provided todo text and parses it through marked when rendering (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L152-L170; https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/views/index.ejs#L18-L21), reaching the parser regular expressions covered by this advisory."
+  },
+  {
+    "id": "goof-marked-regex-block-def",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-rrrm-qjm4-v8hf",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. User-controlled todo content reaches marked through the index template (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L152-L170; https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/views/index.ejs#L18-L21), exercising the parser path identified by the advisory."
+  },
+  {
+    "id": "goof-marked-sanitize-bypass",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-vfvf-mqq8-rwqc",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. app.js enables sanitize:true and exposes marked to templates (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L74-L76); the index template renders user-submitted todo content with marked (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/views/index.ejs#L18-L21). This matches the advisory's sanitizer-bypass precondition."
+  },
+  {
+    "id": "goof-marked-regex-redos",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-x5pg-88wf-qq4p",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. User-supplied todo content is processed by marked in the index view (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L152-L170; https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/views/index.ejs#L18-L21), reaching the regular-expression parsing path affected by this advisory."
+  },
+  {
+    "id": "goof-moment-string-parser",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-446m-mv8f-q348",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins moment 2.15.1. The /import route reads the uploaded file contents, extracts the when field, and passes it to moment(when) (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L241-L283). This invokes the date-string parser addressed by the advisory."
+  },
+  {
+    "id": "goof-moment-user-locale",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-8hfj-j24r-96c4",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins moment 2.15.1. The /import route takes locale from each uploaded CSV row and passes it to moment.locale(locale) (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L267-L282). The advisory explicitly concerns server-side locale switching with a user-provided string."
+  },
+  {
+    "id": "goof-st-path-traversal",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-69rr-wvh9-6c4q",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins st 0.2.4, affected by this traversal advisory. app.js mounts the st static-file middleware for /public (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L71-L72), exposing the middleware's URL-to-file path handling to requests."
+  },
+  {
+    "id": "goof-st-open-redirect",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-72fg-jqhx-c68p",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins st 0.2.4, affected by this redirect advisory. app.js exposes the st static middleware to HTTP requests under /public (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L71-L72), reaching the middleware's request path handling."
+  },
+  {
+    "id": "goof-typeorm-save-user-fields",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-q2pj-6v73-8rgj",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins TypeORM 0.2.24. The POST /users handler copies request-body fields into a user object and passes it to repo.save(user) (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/users.js#L26-L38); app.js mounts that route (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L68-L69). The advisory identifies crafted requests to repository.save as affected."
+  },
+  {
+    "id": "goof-validator-rtrim-redos",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-xx4c-jj58-r7x6",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins validator 13.5.2. The account-details handler reads profile fields from req.body, validates them, and calls validator.rtrim on user-provided first and last names (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L89-L105). The advisory identifies rtrim as an affected sanitizer."
+  },
+  {
+    "id": "nodegoat-body-parser-urlencoded",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-qwcr-r2fm-qrc7",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins body-parser 1.18.3. server.js enables bodyParser.urlencoded({ extended: false }) before registering the application routes (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/server.js#L70-L75), matching the URL-encoded parsing feature named in this advisory."
+  },
+  {
+    "id": "nodegoat-express-redirect-xss",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-qw6h-vgh9-j6wx",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins Express 4.16.4. The /learn handler passes req.query.url directly to res.redirect (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/routes/index.js#L69-L73), matching the response.redirect API affected by this advisory."
+  },
+  {
+    "id": "nodegoat-express-malformed-redirect",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-rv95-896h-c2vc",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins Express 4.16.4. The /learn handler passes the untrusted query URL directly to res.redirect (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/routes/index.js#L69-L73), invoking the redirect behavior named in this advisory."
+  },
+  {
+    "id": "nodegoat-marked-regex-ref-link",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-5v2h-r2cx-5xgj",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. The /memos POST handler stores req.body.memo and subsequently renders the memo list through marked(doc.memo) (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/routes/memos.js#L11-L31; https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/views/memos.html#L15-L33). This is the parser path affected by the advisory."
+  },
+  {
+    "id": "nodegoat-marked-data-uri-xss",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-7px7-7xjx-hxm8",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. User-submitted memos are rendered using marked(doc.memo) (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/routes/memos.js#L11-L31; https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/views/memos.html#L15-L33), reaching its data-URI parsing path."
+  },
+  {
+    "id": "nodegoat-marked-regex-links",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-p9wx-2529-fp83",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. The application accepts memo text from req.body.memo and later parses it with marked(doc.memo) in the template (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/routes/memos.js#L11-L31; https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/views/memos.html#L15-L33), matching the parser behavior affected by this advisory."
+  },
+  {
+    "id": "nodegoat-marked-regex-block-def",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-rrrm-qjm4-v8hf",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. The /memos flow accepts user text and runs marked(doc.memo) when displaying it (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/routes/memos.js#L11-L31; https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/views/memos.html#L15-L33), exercising the regular-expression parser affected by this advisory."
+  },
+  {
+    "id": "nodegoat-marked-sanitize-bypass",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-vfvf-mqq8-rwqc",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. server.js configures sanitize:true (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/server.js#L124-L129), and submitted memos are passed to marked during rendering (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/routes/memos.js#L11-L31; https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/views/memos.html#L15-L33), satisfying the advisory's sanitizer configuration and input path."
+  },
+  {
+    "id": "nodegoat-marked-regex-redos",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-x5pg-88wf-qq4p",
+    "expectedVerdict": "REACHABLE",
+    "rationale": "package-lock.json pins marked 0.3.5. The app stores user-submitted memos and parses them via marked(doc.memo) on display (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/routes/memos.js#L11-L31; https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/app/views/memos.html#L15-L33), reaching the affected Markdown parser."
+  },
+  {
+    "id": "goof-admzip-async-decompression",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-8238-w5pm-2374",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The advisory affects adm-zip's asynchronous decompression API. At this commit the application calls only the synchronous extractAllTo method for uploaded archives (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L241-L257); no async decompression API call exists in the application source."
+  },
+  {
+    "id": "goof-admzip-async-size-guard",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-c6fg-446q-cg94",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "This advisory is specific to getDataAsync(). The pinned application uses AdmZip only through synchronous extractAllTo for the uploaded archive and contains no getDataAsync call (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L241-L257)."
+  },
+  {
+    "id": "goof-admzip-preserve-permissions",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-j5f4-cc29-5x44",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The advisory requires keepOriginalPermission=true. The application calls extractAllTo(extracted_path, true) with only the destination and overwrite arguments, leaving keepOriginalPermission unset (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L254-L257)."
+  },
+  {
+    "id": "goof-body-parser-invalid-limit",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-v422-hmwv-36x6",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "This advisory requires an invalid body-parser limit option. app.js configures JSON and URL-encoded parsing without a limit override, so the package default is used rather than an invalid configured value (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/app.js#L47-L49)."
+  },
+  {
+    "id": "goof-lodash-redos-number-trimming",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-29mw-wpgm-hmr9",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "This advisory affects lodash toNumber, trim, and trimEnd. The pinned application calls lodash merge only and has no call to those affected functions (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351)."
+  },
+  {
+    "id": "goof-lodash-template-command-injection",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-35jh-r3h4-6jhm",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "This advisory is specific to lodash template(). The application calls _.merge in routes/index.js and has no template() call (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351)."
+  },
+  {
+    "id": "goof-lodash-unset-omit-array-path",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-f23m-r3pf-42rh",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The advisory affects lodash unset() and omit(). The pinned application calls _.merge but has no call to either affected API (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351)."
+  },
+  {
+    "id": "goof-lodash-defaultsdeep",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-jf85-cpcp-j695",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "GHSA-jf85-cpcp-j695 identifies defaultsDeep as the affected lodash function. The pinned application uses _.merge instead and contains no defaultsDeep call (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351)."
+  },
+  {
+    "id": "goof-lodash-pick-set-update",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-p6mc-m468-83gw",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The advisory affects lodash pick, set, setWith, update, updateWith, and zipObjectDeep. The pinned application calls _.merge and has no calls to those affected functions (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351)."
+  },
+  {
+    "id": "goof-lodash-template-imports",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-r5fr-rjxr-66jc",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "This advisory affects imports key names supplied to lodash template(). No template() call exists in the pinned application; its lodash use is _.merge in the chat handler (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351)."
+  },
+  {
+    "id": "goof-lodash-date-handler-redos",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-x5rq-j2xg-h7qm",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "This advisory concerns lodash's date handler. The pinned application imports lodash only for _.merge in routes/index.js and does not call a lodash date-handler API (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351)."
+  },
+  {
+    "id": "goof-lodash-unset-omit",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-xxjr-mmjv-4gpg",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "The advisory affects lodash unset() and omit(). The pinned application calls _.merge only and does not invoke either affected function (https://github.com/Snyk-learn/nodejs-goof/blob/d240896711e31c540fc1cab79ae2e4cf63f00b1a/routes/index.js#L342-L351)."
+  },
+  {
+    "id": "nodegoat-body-parser-invalid-limit",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+    "advisoryId": "GHSA-v422-hmwv-36x6",
+    "expectedVerdict": "NOT_REACHABLE",
+    "rationale": "This advisory requires an invalid body-parser limit option. The pinned server configures JSON and URL-encoded parsers without a limit override, so the default limit applies (https://github.com/OWASP/NodeGoat/blob/c5cb68a7084e4ae7dcc60e6a98768720a81841e8/server.js#L70-L75)."
+  },
+  {
+    "id": "goof-ejs-weak-input-validation",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-3w5v-p54c-f74x",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "The lockfile contains an affected ejs release and the application has EJS views, but the pinned source evidence reviewed here does not establish whether the advisory's weak-input-validation path is reached by its render configuration. Keep the ground truth UNKNOWN rather than infer reachability from package presence."
+  },
+  {
+    "id": "goof-ejs-dos",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-6x77-rpqf-j6mw",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "The lockfile contains an affected ejs release, but the advisory-specific input and rendering preconditions were not independently established for the pinned EJS view configuration. Retain UNKNOWN rather than treat the dependency version alone as proof."
+  },
+  {
+    "id": "goof-ejs-pollution-protection",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-ghr5-ch3p-vcr6",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "The lockfile contains an affected ejs release, but the source review did not establish whether application-controlled render options reach the pollution-protection code described by the advisory. Keep UNKNOWN rather than infer from dependency presence."
+  },
+  {
+    "id": "goof-ejs-template-xss",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-hwcf-pp87-7x6p",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "The lockfile contains an affected ejs release and EJS templates are rendered, but the pinned source review did not establish the advisory-specific input-to-template condition. Keep UNKNOWN rather than infer from the package version."
+  },
+  {
+    "id": "goof-ejs-template-injection",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-phwq-j96m-2c2q",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "The lockfile contains an affected ejs release, but the pinned source review did not confirm that user-controlled data is interpreted as template source rather than render data. Keep UNKNOWN rather than infer a vulnerable call path."
+  },
+  {
+    "id": "goof-express-fileupload-prototype-pollution",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-9wcg-jrwf-8gg7",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "The application enables express-fileupload middleware and reads uploaded file data, but the source review did not verify the advisory-specific prototype-pollution option or property path. Keep UNKNOWN pending exact API-path review."
+  },
+  {
+    "id": "goof-express-fileupload-dos",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-q3w9-g74q-vp5f",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "The application enables express-fileupload middleware, but the source evidence reviewed does not establish the advisory-specific request and upload limits needed to label this path REACHABLE or NOT_REACHABLE. Preserve UNKNOWN."
+  },
+  {
+    "id": "goof-express-fileupload-overwrite",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-w4m6-x6c2-j5c9",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "The application enables express-fileupload and accepts uploaded files, but the exact arbitrary-overwrite behavior described by this advisory depends on library handling not established from the app call site alone. Preserve UNKNOWN."
+  },
+  {
+    "id": "goof-hbs-file-exposure",
+    "repository": "https://github.com/Snyk-learn/nodejs-goof",
+    "commit": "d240896711e31c540fc1cab79ae2e4cf63f00b1a",
+    "advisoryId": "GHSA-7f5c-rpf4-86p8",
+    "expectedVerdict": "UNKNOWN",
+    "rationale": "The application registers hbs as a view engine, but the pinned source review did not establish whether the advisory's filesystem exposure preconditions are reached through the static template names and render options. Retain UNKNOWN pending evidence."
+  }
+]

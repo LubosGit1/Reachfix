@@ -81,11 +81,20 @@ export async function loadBenchmarkCases(
         );
       }
       try {
-        const benchmarkCase = parseBenchmarkCase(parsed);
-        if (`${benchmarkCase.id}.json` !== fileName) {
-          throw new Error(`Case ID must match filename ${fileName}.`);
+        const caseValues = Array.isArray(parsed) ? parsed : [parsed];
+        if (caseValues.length === 0) {
+          throw new Error(`Case file ${fileName} must not be empty.`);
         }
-        return benchmarkCase;
+        return caseValues.map((caseValue) => {
+          const benchmarkCase = parseBenchmarkCase(caseValue);
+          if (
+            !Array.isArray(parsed) &&
+            `${benchmarkCase.id}.json` !== fileName
+          ) {
+            throw new Error(`Case ID must match filename ${fileName}.`);
+          }
+          return benchmarkCase;
+        });
       } catch (error) {
         throw new BenchmarkError(
           "INVALID_DATASET",
@@ -96,13 +105,16 @@ export async function loadBenchmarkCases(
     }),
   );
 
-  if (new Set(cases.map(({ id }) => id)).size !== cases.length) {
+  const flattenedCases = cases.flat();
+  if (
+    new Set(flattenedCases.map(({ id }) => id)).size !== flattenedCases.length
+  ) {
     throw new BenchmarkError(
       "INVALID_DATASET",
       "Benchmark case IDs must be unique.",
     );
   }
-  return cases;
+  return flattenedCases;
 }
 
 export async function runBenchmarkDataset(
@@ -124,7 +136,8 @@ export async function runBenchmarkDataset(
     schemaVersion: "1.0",
     startedAt: started.toISOString(),
     completedAt: completed.toISOString(),
-    datasetPath: path.resolve(options.casesPath),
+    datasetPath:
+      path.relative(process.cwd(), path.resolve(options.casesPath)) || ".",
     results,
     metrics: calculateBenchmarkMetrics(results),
   };

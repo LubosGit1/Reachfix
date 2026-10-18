@@ -63,10 +63,14 @@ that branch protection or repository policy will permit the PR.
 Benchmark verdicts are manually labeled for a specific repository commit and
 advisory. The author must record a rationale and verify ground truth
 independently; reachfix output is not ground truth. The template is deliberately
-`UNKNOWN`. The checked-in dataset contains one evidence-backed seed case, which
-is insufficient to publish comparative scores. The README report withholds
-metrics until a run contains at least 50 manually reviewed cases and at least
-30% ground-truth `REACHABLE` cases.
+`UNKNOWN`. The checked-in dataset contains 50 package/advisory cases across
+two intentionally vulnerable training applications: 28 `REACHABLE`, 13
+`NOT_REACHABLE`, and 9 `UNKNOWN`. The cases meet the minimum size and reachable
+share, but the repository diversity is low and the results are not
+representative of general npm projects. The README report withholds metrics
+unless a run contains at least 50 manually reviewed cases and at least 30%
+ground-truth `REACHABLE` cases; meeting that threshold does not make a biased
+sample representative.
 
 The generated table reports:
 
