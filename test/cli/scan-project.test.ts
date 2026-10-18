@@ -138,6 +138,44 @@ describe("scan pipeline", () => {
     expect(results[0]?.reachability.verdict).toBe("UNKNOWN");
   });
 
+  it("uses positive import evidence when call-path analysis misses an alias", async () => {
+    const results = await scanProject("/fixture", {
+      lockfileParser: { parse: vi.fn().mockResolvedValue(inventory) },
+      advisoryClient: {
+        findVulnerabilities: vi
+          .fn()
+          .mockResolvedValue([finding(dependency(true))]),
+      },
+      reachabilityAnalyzer: {
+        analyze: vi.fn().mockResolvedValue({
+          dependencyName: "vulnerable",
+          verdict: "NOT_REACHABLE",
+          reason: "The imported symbol alias was not recognized.",
+          evidence: [],
+        }),
+      },
+      importAnalyzer: {
+        analyze: vi.fn().mockResolvedValue({
+          dependencyName: "vulnerable",
+          verdict: "REACHABLE",
+          reason: "A literal import was found.",
+          evidence: [
+            {
+              filePath: "/fixture/src/index.js",
+              importType: "require",
+              statement: "const alias = require('vulnerable');",
+            },
+          ],
+        }),
+      },
+    });
+
+    expect(results[0]?.reachability).toMatchObject({
+      verdict: "REACHABLE",
+      reason: "A literal import was found.",
+    });
+  });
+
   it("reports re-exported packages as UNKNOWN because consumers are external", async () => {
     const results = await scanProject("/fixture", {
       lockfileParser: { parse: vi.fn().mockResolvedValue(inventory) },

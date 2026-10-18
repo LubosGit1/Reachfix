@@ -186,7 +186,10 @@ export class OsvAdvisoryClient {
             "OSV.dev returned a vulnerability without an ID.",
           );
         }
-        if (Array.isArray(vulnerability.affected)) {
+        if (
+          Array.isArray(vulnerability.affected) &&
+          vulnerability.affected.length > 0
+        ) {
           const advisory = parseAdvisory(vulnerability);
           advisoriesById.set(advisory.id, advisory);
         }
@@ -273,6 +276,12 @@ export class OsvAdvisoryClient {
         `OSV.dev returned advisory ${advisory.id} when ${id} was requested.`,
       );
     }
+    if (advisory.affected.length === 0) {
+      throw new OsvClientError(
+        "INVALID_RESPONSE",
+        `OSV.dev returned advisory ${id} without affected-package data.`,
+      );
+    }
     return advisory;
   }
 
@@ -319,7 +328,11 @@ export class OsvAdvisoryClient {
       return undefined;
     }
     try {
-      return value.advisories.map(parseAdvisory);
+      const advisories = value.advisories.map(parseAdvisory);
+      if (advisories.some(({ affected }) => affected.length === 0)) {
+        return undefined;
+      }
+      return advisories;
     } catch (error) {
       throw new OsvClientError(
         "CACHE_READ_FAILED",

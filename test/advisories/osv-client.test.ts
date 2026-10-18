@@ -1,4 +1,5 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -144,6 +145,61 @@ describe("OSV advisory client", () => {
     expect(fetch.mock.calls[1]?.[0].toString()).toBe(
       "https://api.osv.dev/v1/vulns/GHSA-test-1234",
     );
+  });
+
+  it("refreshes cached OSV batch entries that contain IDs but no affected data", async () => {
+    const cacheDirectory = await createCacheDirectory();
+    const dependency: DependencyNode = {
+      name: "vulnerable",
+      version: "2.0.0",
+      lockfilePath: "node_modules/vulnerable",
+      isDirect: true,
+      dependencies: [],
+    };
+    const cacheKey = createHash("sha256")
+      .update(`npm\0${dependency.name}\0${dependency.version}`)
+      .digest("hex");
+    await mkdir(cacheDirectory, { recursive: true });
+    await writeFile(
+      path.join(cacheDirectory, `${cacheKey}.json`),
+      JSON.stringify({
+        cachedAt: Date.now(),
+        advisories: [
+          {
+            id: "GHSA-test-1234",
+            aliases: [],
+            summary: "",
+            details: "",
+            affected: [],
+          },
+        ],
+      }),
+    );
+    const fetch = vi.fn(
+      async (_input: string | URL | Request, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          return new Response(
+            JSON.stringify({
+              results: [
+                { vulns: [{ id: "GHSA-test-1234", modified: "2024-01-01" }] },
+              ],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          );
+        }
+        return new Response(JSON.stringify(advisoryResponse), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      },
+    );
+    const client = new OsvAdvisoryClient({ cacheDirectory, fetch });
+
+    const findings = await client.findVulnerabilities([dependency]);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.advisories[0]?.affected).toHaveLength(1);
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("refreshes expired cache entries", async () => {

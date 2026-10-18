@@ -57,6 +57,8 @@ export async function scanProject(
           reason:
             "The vulnerable dependency is transitive; its callers inside node_modules have not yet been analyzed.",
         };
+      } else {
+        reachability = importReachability;
       }
     }
     for (const advisory of finding.advisories) {
