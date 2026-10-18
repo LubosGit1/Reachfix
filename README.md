@@ -51,7 +51,7 @@ Fixes are limited to a single direct or transitive dependency per invocation. Co
 
 ### Benchmark (M7)
 
-Benchmark ground truth is intentionally manual. Create a case template with `pnpm bench:case -- <case-id>`, then edit `bench/cases/<case-id>.json` with a public repository URL, immutable 40-character commit SHA, advisory ID, expected verdict, and evidence-based rationale. Review every verdict yourself; do not treat analyzer output as ground truth. Aim for 50–100 real cases and at least 30% `REACHABLE` cases before publishing metrics.
+Benchmark ground truth is intentionally manual. Create a case template with `pnpm bench:case -- <case-id>`, then edit `bench/cases/<case-id>.json` with a public repository URL, immutable 40-character commit SHA, advisory ID, expected verdict, and evidence-based rationale. Review every verdict yourself; do not treat analyzer output as ground truth. Metrics are withheld from the README until an individual run has at least 50 cases and at least 30% ground-truth `REACHABLE` cases.
 
 The checked-in dataset currently has one evidence-backed seed case, [lodash-prototype-pollution-nodejs-goof](./bench/cases/lodash-prototype-pollution-nodejs-goof.json). It is not representative; expand and review the dataset before publishing metrics.
 
@@ -61,7 +61,7 @@ Run cases using `pnpm bench bench/cases`. Each case is checked out at its pinned
 
 ## Benchmark results
 
-> No benchmark metrics are published until a curated, manually labeled dataset is run.
+> Metrics are withheld until a manually reviewed run contains at least 50 cases and 30% ground-truth REACHABLE cases.
 
 | Date | Cases | Recall | Precision | Alert reduction | Fix success | Median time | Avg. API cost |
 | ---- | ----: | -----: | --------: | --------------: | ----------: | ----------: | ------------: |

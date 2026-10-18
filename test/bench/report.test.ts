@@ -18,18 +18,42 @@ afterEach(async () => {
 });
 
 describe("benchmark report", () => {
-  it("renders dated metrics without inventing results for an empty dataset", async () => {
+  it("withholds metrics for datasets below the publication threshold", async () => {
     const directory = await makeTemporaryDirectory();
     expect(
       await renderBenchmarkReport(path.join(directory, "missing")),
-    ).toContain("> No benchmark metrics are published");
+    ).toContain("at least 50 cases and 30% ground-truth REACHABLE cases");
 
     await writeFile(
       path.join(directory, "2025-01-02.json"),
       JSON.stringify({
         completedAt: "2025-01-02T00:00:00.000Z",
         metrics: {
-          caseCount: 2,
+          caseCount: 49,
+          reachableGroundTruthCount: 15,
+          reachabilityRecall: 1,
+          reachablePrecision: 0.5,
+          alertReduction: null,
+          fixSuccessRate: null,
+          medianTimeMs: 12.4,
+          averageApiCostUsd: 0,
+        },
+      }),
+    );
+    const report = await renderBenchmarkReport(directory);
+    expect(report).not.toContain("| 2025-01-02 |");
+    expect(report).toContain("at least 50 cases");
+  });
+
+  it("renders dated metrics when case count and reachable share meet thresholds", async () => {
+    const directory = await makeTemporaryDirectory();
+    await writeFile(
+      path.join(directory, "2025-01-02.json"),
+      JSON.stringify({
+        completedAt: "2025-01-02T00:00:00.000Z",
+        metrics: {
+          caseCount: 50,
+          reachableGroundTruthCount: 15,
           reachabilityRecall: 1,
           reachablePrecision: 0.5,
           alertReduction: null,
@@ -41,7 +65,7 @@ describe("benchmark report", () => {
     );
     const report = await renderBenchmarkReport(directory);
     expect(report).toContain(
-      "| 2025-01-02 |     2 | 100.0% |     50.0% |             n/a |         n/a |       12 ms |       $0.0000 |",
+      "| 2025-01-02 |    50 | 100.0% |     50.0% |             n/a |         n/a |       12 ms |       $0.0000 |",
     );
   });
 
@@ -63,7 +87,7 @@ describe("benchmark report", () => {
     await updateReadmeBenchmarkSection(readme, results);
     const updated = await readFile(readme, "utf8");
     expect(updated).toContain("Before\n");
-    expect(updated).toContain("> No benchmark metrics are published");
+    expect(updated).toContain("Metrics are withheld until");
     expect(updated).toContain("<!-- reachfix-benchmark:end -->\nAfter");
     expect(updated).not.toContain("\nold\n");
   });

@@ -3,10 +3,14 @@ import path from "node:path";
 import { z } from "zod";
 import { BenchmarkError } from "./errors.js";
 
+const MINIMUM_PUBLISHABLE_CASES = 50;
+const MINIMUM_REACHABLE_FRACTION = 0.3;
+
 const ReportRunSchema = z.object({
   completedAt: z.string().datetime(),
   metrics: z.object({
     caseCount: z.number().int().nonnegative(),
+    reachableGroundTruthCount: z.number().int().nonnegative(),
     reachabilityRecall: z.number().nullable(),
     reachablePrecision: z.number().nullable(),
     alertReduction: z.number().nullable(),
@@ -31,7 +35,7 @@ const EMPTY_REPORT = [
   "",
   "## Benchmark results",
   "",
-  "> No benchmark metrics are published until a curated, manually labeled dataset is run.",
+  `> Metrics are withheld until a manually reviewed run contains at least ${MINIMUM_PUBLISHABLE_CASES} cases and ${MINIMUM_REACHABLE_FRACTION * 100}% ground-truth REACHABLE cases.`,
   "",
   ...renderTable([]),
   "",
@@ -41,6 +45,7 @@ interface ReportRun {
   completedAt: string;
   metrics: {
     caseCount: number;
+    reachableGroundTruthCount: number;
     reachabilityRecall: number | null;
     reachablePrecision: number | null;
     alertReduction: number | null;
@@ -94,7 +99,14 @@ export async function renderBenchmarkReport(
         { cause: result.error },
       );
     }
-    runs.push(result.data);
+    const { metrics } = result.data;
+    if (
+      metrics.caseCount >= MINIMUM_PUBLISHABLE_CASES &&
+      metrics.reachableGroundTruthCount / metrics.caseCount >=
+        MINIMUM_REACHABLE_FRACTION
+    ) {
+      runs.push(result.data);
+    }
   }
 
   if (runs.length === 0) {
@@ -114,7 +126,7 @@ export async function renderBenchmarkReport(
     "",
     "## Benchmark results",
     "",
-    "> No benchmark metrics are published until a curated, manually labeled dataset is run.",
+    `> Only manually reviewed runs with at least ${MINIMUM_PUBLISHABLE_CASES} cases and ${MINIMUM_REACHABLE_FRACTION * 100}% ground-truth REACHABLE cases are shown.`,
     "",
     ...renderTable(rows),
     "",

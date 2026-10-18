@@ -63,8 +63,10 @@ that branch protection or repository policy will permit the PR.
 Benchmark verdicts are manually labeled for a specific repository commit and
 advisory. The author must record a rationale and verify ground truth
 independently; reachfix output is not ground truth. The template is deliberately
-`UNKNOWN`. No benchmark cases or scores are included until real cases are
-curated and run.
+`UNKNOWN`. The checked-in dataset contains one evidence-backed seed case, which
+is insufficient to publish comparative scores. The README report withholds
+metrics until a run contains at least 50 manually reviewed cases and at least
+30% ground-truth `REACHABLE` cases.
 
 The generated table reports:
 
